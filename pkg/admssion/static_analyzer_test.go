@@ -19,7 +19,7 @@
 	func TestAnalyzeFile_Success(t *testing.T) {
 		// 1. 준비 (Arrange)
 		// 테스트를 위해 미리 컴파일해둔 C 애플리케이션 바이너리 경로입니다.
-		testBinaryPath := "test_app" 
+		testBinaryPath := "./testdata/test" 
 
 		// 테스트 바이너리가 존재하는지 먼저 확인합니다. 없다면 테스트를 진행할 수 없습니다.
 		if _, err := os.Stat(testBinaryPath); os.IsNotExist(err) {
