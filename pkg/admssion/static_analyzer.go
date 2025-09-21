@@ -1,7 +1,7 @@
 // elfanalyzer 패키지는 ELF 바이너리 파일을 정적으로 분석하는 기능을 제공합니다.
 // 이 분석기는 외부 라이브러리 호출(잠재적 시스템 콜)과 바이너리 내에 포함된
 // 문자열(잠재적 파일 경로)을 추출하는 데 중점을 둡니다.
-package elfanalyzer
+package static_analyzer
 
 import (
 	"crypto/sha256"
