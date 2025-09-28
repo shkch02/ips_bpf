@@ -41,7 +41,8 @@ func main() {
 		}
 	}
 
-	symbols, err := analyzer.ExtractSymbols(filePath)
+
+	symbols, err := analyzer.ExtractDynamicSymbols(filePath)
 	if err != nil {
 		log.Fatalf("오류 발생: %v", err)
 	}
@@ -50,10 +51,26 @@ func main() {
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
 	} else {
-		fmt.Println("발견된 공유 라이브러리의 심볼 목록:")
+		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
 		for _, sym := range symbols {
 			fmt.Printf("- %s\n", sym)
 		}
 	}
+
+
+	// 스트립 되지 않은 파일이 있다면 해당 함수사용
+	/*symbols, err := analyzer.ExtractSymbols(filePath)
+	if err != nil {
+		log.Fatalf("오류 발생: %v", err)
+	}
+
+	if len(symbols) == 0 {
+		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
+	} else {
+		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
+		for _, sym := range symbols {
+			fmt.Printf("- %s\n", sym)
+		}
+	}*/
 
 }

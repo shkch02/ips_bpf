@@ -31,6 +31,35 @@ func ExtractSharedLibs(filePath string) ([]string, error) {
 
 // ExtractSymbols는 지정된 ELF 파일 경로를 받아 해당 파일에 포함된 심볼 목록을 추출합니다. (스트립 되지 않은 시스템콜을 뽑음)
 // 심볼 :  함수 이름, 변수 이름 등
+func ExtractDynamicSymbols(filePath string) ([]string, error) {
+	// ELF 파일 열기
+	elfFile, err := elf.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("ELF 파일을 여는 데 실패했습니다: %w", err)
+	}
+	defer elfFile.Close()
+
+	// 심볼 테이블에서 심볼 구조체 가져오기
+	DynamicSymbols, err := elfFile.DynamicSymbols() //symbols 추출
+	if err != nil {
+		// 심볼 테이블이 없는 경우, 빈 목록과 nil 에러를 반환할 수 있습니다.
+		if _, ok := err.(*elf.FormatError); ok {
+			return []string{}, nil // 심볼 정보가 없는 실행 파일일 수 있습니다.
+		}
+		return nil, fmt.Errorf("심볼을 가져오는 데 실패했습니다: %w", err)
+	}
+
+	// 심볼 테이블에서 심볼 이름만 추출
+	symbolNames := make([]string, 0, len(DynamicSymbols))
+	for _, sym := range DynamicSymbols {
+    	symbolNames = append(symbolNames, sym.Name)
+}
+
+	return symbolNames, nil
+}
+
+
+//스트립 되지 않은 elf있다면 해당 함수 사용
 func ExtractSymbols(filePath string) ([]string, error) {
 	// ELF 파일 열기
 	elfFile, err := elf.Open(filePath)
@@ -39,12 +68,21 @@ func ExtractSymbols(filePath string) ([]string, error) {
 	}
 	defer elfFile.Close()
 
-	// 심볼 테이블에서 심볼 목록 가져오기
-	symbols, err := elfFile.Symbols() //symbols 추출
+	// 심볼 테이블에서 심볼 구조체 가져오기
+	Symbols, err := elfFile.Symbols() //symbols 추출
 	if err != nil {
 		// 심볼 테이블이 없는 경우, 빈 목록과 nil 에러를 반환할 수 있습니다.
 		if _, ok := err.(*elf.FormatError); ok {
-			return []string{}, nil // 심볼 정보가 없는 실행 파일일 수 있습니다.(스트립된 경우 심볼정보 추출 불가 )
+			return []string{}, nil // 심볼 정보가 없는 실행 파일일 수 있습니다.
 		}
 		return nil, fmt.Errorf("심볼을 가져오는 데 실패했습니다: %w 스트립된 파일일 가능성 농후", err)
 	}
+
+	// 심볼 테이블에서 심볼 이름만 추출
+	symbolNames := make([]string, 0, len(Symbols))
+	for _, sym := range Symbols {
+    	symbolNames = append(symbolNames, sym.Name)
+}
+
+	return symbolNames, nil
+}
