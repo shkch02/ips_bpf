@@ -1,12 +1,16 @@
 // cmd/static-analyzer/main.go
 //# Nginx 바이너리를 분석하는 예시
 //go run cmd/static-analyzer/main.go /usr/sbin/nginx
+
+//elf파일에서 공유 라이브러리 목록과 심볼 목록을 추출하는 간단한 static analyzer 프로그램
+
 package main
 
 import (
 	"fmt"
 	"log"
 	"os"
+	"debug/elf"
 	// 현재 프로젝트의 analyzer 패키지를 import 합니다.
 	// 실제 프로젝트에서는 "your_project_module_name/pkg/analyzer"와 같은 형식이 됩니다.
 	"static-analyzer/pkg/analyzer"
@@ -24,11 +28,19 @@ func main() {
 	fmt.Printf("🔍 분석 대상 파일: %s\n", filePath)
 	fmt.Println("----------------------------------------")
 
+	analyzer, err := analyzer.New(filePath)
+    if err != nil {
+        log.Fatalf("분석기 생성 오류: %v", err)
+    }
+    defer analyzer.Close()
 
-	// 공유 라이브러리 목록 추출 함수 호출
-	libs, err := analyzer.ExtractSharedLibs(filePath)
+
+	libs, err := analyzer.ExtractSharedLibs()
 	if err != nil {
-		log.Fatalf("오류 발생: %v", err)
+    // FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
+	    if _, ok := err.(*elf.FormatError); !ok {
+    	    log.Printf("공유 라이브러리 분석 중 예상치 못한 오류 발생: %v", err)
+    	}
 	}
 
 	// 결과 출력
@@ -41,10 +53,13 @@ func main() {
 		}
 	}
 
+	fmt.Println("----------------------------------------")
 
-	symbols, err := analyzer.ExtractDynamicSymbols(filePath)
+	symbols, err := analyzer.ExtractDynamicSymbols()
 	if err != nil {
-		log.Fatalf("오류 발생: %v", err)
+	    if _, ok := err.(*elf.FormatError); !ok {
+    	    log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
+    	}
 	}
 
 	// 결과 출력, 심볼 목록 시원찮으면 바이너리 .text 섹션에서 직접 뽑는 방법도 고려
@@ -57,12 +72,16 @@ func main() {
 		}
 	}
 
+	fmt.Println("----------------------------------------")
 
 	// 스트립 되지 않은 파일이 있다면 해당 함수사용
-	/*symbols, err := analyzer.ExtractSymbols(filePath)
+	/*symbols, err := analyzer.ExtractSymbols()
 	if err != nil {
-		log.Fatalf("오류 발생: %v", err)
+	    if _, ok := err.(*elf.FormatError); !ok {
+    	    log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
+    	}
 	}
+
 
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
