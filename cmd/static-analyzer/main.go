@@ -11,7 +11,7 @@ import (
 	"log"
 	"os"
 	"debug/elf"
-	"static-analyzer/pkg/analyzer"
+	"ips_bpf/static-analyzer/pkg/analyzer"
 )
 
 func main() {
