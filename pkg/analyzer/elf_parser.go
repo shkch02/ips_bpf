@@ -4,8 +4,9 @@ package analyzer
 import (
 	"debug/elf"
 	"fmt"
-	"log"
+
 	//"io"
+	"github.com/knightsc/gapstone" //디스어셈블 라이브러리
 )
 
 // ELFAnalyzer는 파싱된 ELF 파일 정보를 담는 구조체
@@ -60,25 +61,44 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 	return symbolNames, nil
 }
 
-// Section: 내부 elf.File의 Section 메서드를 호출
+// Section: 내부 elf.File의 Section 메서드를 호출, name에 해당하는 섹션 반환
 func (a *ELFAnalyzer) Section(name string) *elf.Section {
 	return a.elfFile.Section(name)
 }
 
 // ExtractAsmCode : .text 섹션의 어셈블리 코드와 시작 주소 추출
-func (a *ELFAnalyzer) ExtractAsmCode() ([]byte, uint64) {
+func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
 	textSect := a.Section(".text")
 	if textSect == nil {
-		log.Fatal(".text 섹션을 찾을 수 없습니다.")
+		return nil, 0, fmt.Errorf(".text 섹션을 찾을 수 없습니다. (섹션이 스트립되었을 수 있습니다)")
 	}
-	// 섹션의 가상 주소(Virtual Address) 추출
-	startAddr := textSect.Addr
 
-	// 섹션 데이터 추출
-	data, err := textSect.Data()
+	startAddr := textSect.Addr   // 섹션의 가상 주소(Virtual Address) 추출
+	data, err := textSect.Data() // 섹션의 실제 데이터 추출
 	if err != nil {
-		log.Fatalf("섹션 데이터 읽기 실패: %v", err)
+		return nil, 0, fmt.Errorf(".text 섹션 데이터 읽기 실패: %v", err)
 	}
 
-	return data, startAddr
+	//gapstone
+	engine, err := gapstone.New(
+		gapstone.CS_ARCH_X86,
+		gapstone.CS_MODE_64,
+	)
+	fmt.Println("ARCH_X86_64 , MODE_64")
+
+	if err != nil {
+		return nil, 0, fmt.Errorf("Capstone 엔진 생성 실패: %w", err)
+	}
+	defer engine.Close()
+
+	maj, min := engine.Version()
+	fmt.Printf("Capstone 버전: %d.%d\n", maj, min)
+
+	insns, err := engine.Disasm(data, startAddr, 0)
+
+	if err != nil {
+		// Disasm 실패 시 오류 반환
+		return nil, 0, fmt.Errorf("Disasm 실패: %w", err)
+	}
+	return insns, startAddr, nil
 }
