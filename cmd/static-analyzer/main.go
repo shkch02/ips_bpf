@@ -11,8 +11,6 @@ import (
 	"log"
 	"os"
 	"debug/elf"
-	// 현재 프로젝트의 analyzer 패키지를 import 합니다.
-	// 실제 프로젝트에서는 "your_project_module_name/pkg/analyzer"와 같은 형식이 됩니다.
 	"static-analyzer/pkg/analyzer"
 )
 
@@ -25,7 +23,7 @@ func main() {
 
 	// 첫 번째 인자를 파일 경로로 사용
 	filePath := os.Args[1]
-	fmt.Printf("🔍 분석 대상 파일: %s\n", filePath)
+	fmt.Printf("분석 대상 파일: %s\n", filePath)
 	fmt.Println("----------------------------------------")
 
 	analyzer, err := analyzer.New(filePath)
@@ -62,7 +60,6 @@ func main() {
     	}
 	}
 
-	// 결과 출력, 심볼 목록 시원찮으면 바이너리 .text 섹션에서 직접 뽑는 방법도 고려
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
 	} else {
@@ -74,7 +71,7 @@ func main() {
 
 	fmt.Println("----------------------------------------")
 
-	// 스트립 되지 않은 파일이 있다면 해당 함수사용
+	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현해
 	/*symbols, err := analyzer.ExtractSymbols()
 	if err != nil {
 	    if _, ok := err.(*elf.FormatError); !ok {
