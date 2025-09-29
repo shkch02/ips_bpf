@@ -87,18 +87,14 @@ func main() {
 			}
 		}*/
 
-	asmcodes, err := analyzer.ExtractAsmCode()
+	insns, startAddr, err := analyzer.ExtractAsmCode()
 	if err != nil {
 		log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
 	}
 
-	if len(asmcodes) == 0 {
-		fmt.Println("어셈블리 코드 조회 결과 없음")
-	} else {
-		fmt.Println("어셈블리 코드 조회 결과:")
-		for _, asm := range asmcodes {
-			fmt.Printf("$s\n", asm)
-		}
+	fmt.Printf("시작주소 : 0x%x\n", startAddr)
+	for _, asm := range insns {
+		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
 	}
 
 }
