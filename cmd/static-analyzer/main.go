@@ -13,7 +13,7 @@ import (
 	"debug/elf"
 	// 현재 프로젝트의 analyzer 패키지를 import 합니다.
 	// 실제 프로젝트에서는 "your_project_module_name/pkg/analyzer"와 같은 형식이 됩니다.
-	"static-analyzer/pkg/analyzer"
+	"ips_bpf/static-analyzer/pkg/analyzer"
 )
 
 func main() {
