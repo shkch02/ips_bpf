@@ -6,7 +6,6 @@
 package main
 
 import (
-	"debug/elf"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
 	"ips_bpf/static-analyzer/pkg/asmanalysis"
@@ -32,43 +31,43 @@ func main() {
 	}
 	defer analyzer.Close()
 
-	libs, err := analyzer.ExtractSharedLibs()
-	if err != nil {
-		// FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
-		if _, ok := err.(*elf.FormatError); !ok {
-			log.Printf("공유 라이브러리 분석 중 예상치 못한 오류 발생: %v", err)
-		}
-	}
+	//libs, err := analyzer.ExtractSharedLibs()
+	//if err != nil {
+	//	// FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
+	//	if _, ok := err.(*elf.FormatError); !ok {
+	//		log.Printf("공유 라이브러리 분석 중 예상치 못한 오류 발생: %v", err)
+	//	}
+	//}
 
 	// 결과 출력
-	if len(libs) == 0 {
-		fmt.Println("이 파일은 동적 공유 라이브러리에 의존하지 않습니다.")
-	} else {
-		fmt.Println("발견된 공유 라이브러리 목록:")
-		for _, lib := range libs {
-			fmt.Printf("- %s\n", lib)
-		}
-	}
+	//if len(libs) == 0 {
+	//	fmt.Println("이 파일은 동적 공유 라이브러리에 의존하지 않습니다.")
+	//} else {
+	//	fmt.Println("발견된 공유 라이브러리 목록:")
+	//	for _, lib := range libs {
+	//		fmt.Printf("- %s\n", lib)
+	//	}
+	//}
 
-	fmt.Println("----------------------------------------")
+	//fmt.Println("----------------------------------------")
 
-	symbols, err := analyzer.ExtractDynamicSymbols()
-	if err != nil {
-		if _, ok := err.(*elf.FormatError); !ok {
-			log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
-		}
-	}
+	//symbols, err := analyzer.ExtractDynamicSymbols()
+	//if err != nil {
+	//	if _, ok := err.(*elf.FormatError); !ok {
+	//		log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
+	//	}
+	//}
 
-	if len(symbols) == 0 {
-		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
-	} else {
-		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
-		for _, sym := range symbols {
-			fmt.Printf("- %s\n", sym)
-		}
-	}
+	//if len(symbols) == 0 {
+	//	fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
+	//} else {
+	//	fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
+	//	for _, sym := range symbols {
+	//		fmt.Printf("- %s\n", sym)
+	//	}
+	//}
 
-	fmt.Println("----------------------------------------")
+	//fmt.Println("----------------------------------------")
 
 	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현해
 	/*symbols, err := analyzer.ExtractSymbols()
@@ -92,11 +91,11 @@ func main() {
 	if err != nil {
 		log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
 	}
-
 	fmt.Printf("시작주소 : 0x%x\n", startAddr)
-	for _, asm := range insns {
-		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
-	}
+	//fmt.Printf("시작주소 : 0x%x\n", startAddr)
+	//for _, asm := range insns {
+	//	fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
+	//}
 
 	syscalls, err := asmanalysis.FindSyscalls(insns)
 	if err != nil {
