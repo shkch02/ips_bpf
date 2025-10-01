@@ -25,7 +25,16 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		if insn.X86 != nil {
 			continue
 		}
-		fmt.Println("디버깅용 출력:,forloop 들어왔음", insn.Mnemonic, insn.OpStr) //디버깅용 출력
+		fmt.Println("디버깅용 출력:,forloop 들어왔음") //디버깅용 출력
+		fmt.Println("디버깅용 출력:,insn.Id", insn.Id)
+		fmt.Println("디버깅용 출력:,insn.Address", insn.Address)
+		fmt.Println("디버깅용 출력:,insn.Size", insn.Size)
+		fmt.Println("디버깅용 출력:,insn.Bytes", insn.Bytes)
+		fmt.Println("디버깅용 출력:,insn.Mnemonic", insn.Mnemonic)
+		fmt.Println("디버깅용 출력:,insn.OpStr", insn.OpStr)
+		//fmt.Println("디버깅용 출력:,insn.X86.Prefix", insn.X86.Prefix) //
+
+		//디버깅용 출력
 		// --- 1. rax 값 추적 ---
 		fmt.Println("1-1분기 디버깅", insn.OpStr[0], insn.OpStr[1])
 		// 1-1. mov rax, 0xN (또는 mov eax, 0xN)
