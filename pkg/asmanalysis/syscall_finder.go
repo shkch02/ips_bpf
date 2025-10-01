@@ -33,12 +33,12 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			op0, op1 := insn.OpStr[0], insn.OpStr[1]
 
 			// 첫 번째 피연산자가 rax 또는 eax 레지스터이고,
-			if op0 == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
+			/*if op0 == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
 				// 두 번째 피연산자가 즉시값(숫자)이면, 그 값을 저장.
 				if op1.Type == gapstone.X86_OP_IMM {
 					lastRaxValue = op1.Imm
 				}
-			}
+			*/}
 		}
 		fmt.Println("1-2분기 디버깅", insn.OpStr[0], insn.OpStr[1])
 		// 1-2. xor eax, eax
@@ -47,10 +47,10 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			fmt.Println(op0, op1) //디버깅
 
 			// 두 피연산자가 모두 eax 레지스터이면, rax는 0이 됨.
-			if op0.Type == gapstone.X86_OP_REG && op0.Reg == gapstone.X86_REG_EAX &&
+			/*if op0.Type == gapstone.X86_OP_REG && op0.Reg == gapstone.X86_REG_EAX &&
 				op1.Type == gapstone.X86_OP_REG && op1.Reg == gapstone.X86_REG_EAX {
 				lastRaxValue = 0
-			}
+			}*/
 		}
 
 		// --- 2. syscall 명령어 탐지 ---
