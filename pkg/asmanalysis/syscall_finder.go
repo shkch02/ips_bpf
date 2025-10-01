@@ -61,7 +61,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			if lastRaxValue != -1 {
 				// 결과 목록에 추가
 				results = append(results, SyscallInfo{
-					Address: insn.Address,
+					Address: uint64(insn.Address),
 					Number:  lastRaxValue,
 				})
 			} else {
