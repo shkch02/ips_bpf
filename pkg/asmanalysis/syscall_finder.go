@@ -38,7 +38,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 				if op1.Type == gapstone.X86_OP_IMM {
 					lastRaxValue = op1.Imm
 				}
-			*/}
+			}*/
 		}
 		fmt.Println("1-2분기 디버깅", insn.OpStr[0], insn.OpStr[1])
 		// 1-2. xor eax, eax
