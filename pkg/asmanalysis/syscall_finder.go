@@ -29,7 +29,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		operands := insn.X86.Operands
 
 		// --- 1. rax 값 추적 ---
-
+		fmt.Println("1-1분기 디버깅", operands[0], operands[1])
 		// 1-1. mov rax, 0xN (또는 mov eax, 0xN)
 		if insn.Mnemonic == "mov" && len(operands) == 2 {
 			op0, op1 := operands[0], operands[1]
@@ -42,7 +42,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 				}
 			}
 		}
-
+		fmt.Println("1-2분기 디버깅", operands[0], operands[1])
 		// 1-2. xor eax, eax
 		if insn.Mnemonic == "xor" && len(operands) == 2 {
 			op0, op1 := operands[0], operands[1]
