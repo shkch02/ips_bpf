@@ -46,6 +46,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		// 1-2. xor eax, eax
 		if insn.Mnemonic == "xor" && len(operands) == 2 {
 			op0, op1 := operands[0], operands[1]
+			fmt.Println(op0, op1) //디버깅
 
 			// 두 피연산자가 모두 eax 레지스터이면, rax는 0이 됨.
 			if op0.Type == gapstone.X86_OP_REG && op0.Reg == gapstone.X86_REG_EAX &&
@@ -60,7 +61,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			if lastRaxValue != -1 {
 				// 결과 목록에 추가
 				results = append(results, SyscallInfo{
-					Address: operands.Address,
+					Address: insn.Address,
 					Number:  lastRaxValue,
 				})
 			} else {
