@@ -9,6 +9,7 @@ import (
 	"debug/elf"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
+	"ips_bpf/static-analyzer/pkg/asmanalysis"
 	"log"
 	"os"
 )
@@ -97,4 +98,13 @@ func main() {
 		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
 	}
 
+	syscalls, err := asmanalysis.FindSyscalls(insns)
+	if err != nil {
+		log.Printf("systemcall 추출중 오류 발생: %v", err)
+	}
+
+	fmt.Println("발견된 시스템 콜 목록:")
+	for _, sc := range syscalls {
+		fmt.Printf("- 주소: 0x%x, 시스템 콜 번호: %d\n", sc.Address, sc.Number)
+	}
 }

@@ -94,7 +94,7 @@ func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
 	maj, min := engine.Version()
 	fmt.Printf("Capstone 버전: %d.%d\n", maj, min)
 
-	insns, err := engine.Disasm(data, startAddr, 0)
+	insns, err := engine.Disasm(data, startAddr, 0) //gapstone를 이용한 디스어셈블
 
 	if err != nil {
 		// Disasm 실패 시 오류 반환
