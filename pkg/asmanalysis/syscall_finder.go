@@ -22,18 +22,18 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 
 	for _, insn := range instructions {
 		// X86 관련 정보가 없는 명령어는 건너뜁니다.
-		if insn.X86 == nil {
-			fmt.Println("디버깅용 출력:,insn.X86 == nil, continue")
-			continue
+		//if insn.X86 == nil {
+		//	fmt.Println("디버깅용 출력:,insn.X86 == nil, continue")
+		//	continue
 		}
 		fmt.Println("디버깅용 출력 forloop 내부임 ---------------------") //디버깅용 출력
-		fmt.Println("디버깅용 출력:insn.Id", insn.Id)
+		//fmt.Println("디버깅용 출력:insn.Id", insn.Id)
 		fmt.Println("디버깅용 출력:insn.Address", insn.Address)
-		fmt.Println("디버깅용 출력:insn.Size", insn.Size)
-		fmt.Println("디버깅용 출력:insn.Bytes", insn.Bytes)
+		//fmt.Println("디버깅용 출력:insn.Size", insn.Size)
+		//fmt.Println("디버깅용 출력:insn.Bytes", insn.Bytes)
 		fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
 		fmt.Println("디버깅용 출력:insn.OpStr", insn.OpStr)
-		fmt.Println("디버깅용 출력:insn.X86.Prefix", insn.X86.Prefix) //
+		//fmt.Println("디버깅용 출력:insn.X86.Prefix", insn.X86.Prefix) //
 
 		//디버깅용 출력
 		// --- 1. rax 값 추적 ---
