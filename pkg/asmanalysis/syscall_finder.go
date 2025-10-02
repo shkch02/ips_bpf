@@ -18,7 +18,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 	fmt.Println("FindSyscalls 디버깅용 출력")
 	// rax 레지스터의 마지막 값을 추적하기 위한 변수.
 	// -1은 아직 rax 값이 설정된 적 없음을 의미하는 초기값.
-	lastRaxValue := int64(-1)
+	//lastRaxValue := int64(-1)
 
 	for _, insn := range instructions {
 		// X86 관련 정보가 없는 명령어 방어코드
@@ -34,9 +34,10 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		/*fmt.Println("디버깅용 출력 forloop 내부임 ---------------------") //디버깅용 출력
 		fmt.Printf("디버깅용 출력:insn.Address%x\n", insn.Address)
 		fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
-		fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: [ %s ]\n", insn.OpStr)
 		*/
+		fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: [ %s ]\n", insn.OpStr)
 
+		/*엉터리 알고리즘
 		// 1-1. mov rax, 0xN (또는 mov eax, 0xN)
 		if insn.Mnemonic == "mov" && len(insn.OpStr) == 2 {
 			op0, op1 := insn.OpStr[0], insn.OpStr[1]
@@ -76,6 +77,8 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 				fmt.Printf("경고: 0x%x에서 rax 값이 설정되지 않은 syscall 호출 발견\n", insn.Address)
 			}
 		}
+
+		엉터리 알고리즘 */
 	}
 
 	return results, nil
