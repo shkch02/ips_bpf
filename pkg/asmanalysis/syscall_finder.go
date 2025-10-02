@@ -22,7 +22,8 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 
 	for _, insn := range instructions {
 		// X86 관련 정보가 없는 명령어는 건너뜁니다.
-		if insn.X86 != nil {
+		if insn.X86 == nil {
+			fmt.Println("디버깅용 출력:,insn.X86 == nil, continue")
 			continue
 		}
 		fmt.Println("디버깅용 출력:,forloop 들어왔음") //디버깅용 출력
