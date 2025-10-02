@@ -40,10 +40,10 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		fmt.Printf("디버깅용 출력:insn.Address%x", insn.Address)
 		//fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
 		fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: s : [%s] , +v : [%+v] ,v : [%v] \n", insn.OpStr, insn.OpStr, insn.OpStr)
-		fmt.Println("op0:", insn.X86.Operands[0])
+		/*fmt.Println("op0:", insn.X86.Operands[0])
 		fmt.Println("op1:", insn.X86.Operands[1])
 		fmt.Println("OPerands", insn.X86.Operands)
-		fmt.Println("Mnemonic", insn.Mnemonic)
+		fmt.Println("Mnemonic", insn.Mnemonic)*/
 
 		// 1-1. 'mov rax, 0xN' 또는 'mov eax, 0xN' 패턴 찾기
 		if insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 {
