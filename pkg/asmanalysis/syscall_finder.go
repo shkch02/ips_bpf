@@ -35,7 +35,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		fmt.Printf("디버깅용 출력:insn.Address%x", insn.Address)
 		//fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
 		fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: s : [%s] , +v : [%+v] ,v : [%v] \n", insn.OpStr, insn.OpStr, insn.OpStr)
-		if insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 {
+		if insn.X86 != nil && insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 {
 			fmt.Println(insn.X86.Operands) //디버깅
 		}
 		// insn.X86.Operands는 슬라이스이므로, 인덱스로 각 피연산자에 접근합니다.
