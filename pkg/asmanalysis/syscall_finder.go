@@ -48,7 +48,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 
 			// 첫 번째 피연산자가 레지스터 타입(X86_OP_REG)이고 [4],
 			// 그 레지스터가 rax 또는 eax인지 확인합니다.
-			if op0.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
+			if op0.X86Operand.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
 				// 두 번째 피연산자가 즉시값 타입(X86_OP_IMM)인지 확인합니다 [4].
 				if op1.Type == gapstone.X86_OP_IMM {
 					// 즉시값(Imm)을 lastRaxValue에 저장합니다 [4, 6].
