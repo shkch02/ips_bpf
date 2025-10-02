@@ -44,8 +44,9 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		// 1-1. 'mov rax, 0xN' 또는 'mov eax, 0xN' 패턴 찾기
 		if insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 {
 			// insn.X86.Operands는 슬라이스이므로, 인덱스로 각 피연산자에 접근합니다.
-			op0 := insn.X86.Operands    // 첫 번째 피연산자 (destination)
-			op1 := insn.X86.Operands[2] // 두 번째 피연산자 (source)
+			//fmt.Println(insn.X86.Operands[0].Type)
+			op0 := insn.X86.Operands[0] // 첫 번째 피연산자 (destination)
+			op1 := insn.X86.Operands[1] // 두 번째 피연산자 (source)
 
 			// 첫 번째 피연산자가 레지스터이고, rax 또는 eax인지 확인합니다.
 			if op0.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
