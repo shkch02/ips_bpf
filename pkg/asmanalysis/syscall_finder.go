@@ -33,11 +33,10 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 
 		fmt.Println("디버깅용 출력 forloop 내부임 ---------------------") //디버깅용 출력
 		//fmt.Println("디버깅용 출력:insn.Id", insn.Id)
-		fmt.Println("디버깅용 출력:insn.Address", insn.Address)
+		fmt.Printf("디버깅용 출력:insn.Address%x\n", insn.Address)
 		//fmt.Println("디버깅용 출력:insn.Size", insn.Size)
 		//fmt.Println("디버깅용 출력:insn.Bytes", insn.Bytes)
 		fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
-		fmt.Println("디버깅용 출력:insn.X86.Operands", insn.X86.Operands)
 		fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: [ %s ]\n", insn.OpStr)
 		//fmt.Println("디버깅용 출력:insn.X86.Prefix", insn.X86.Prefix) //
 
