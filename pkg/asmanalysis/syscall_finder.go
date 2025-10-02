@@ -47,8 +47,10 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			op0 := insn.X86.Operands    // 첫 번째 피연산자 (destination)
 			op1 := insn.X86.Operands[2] // 두 번째 피연산자 (source)
 
+
+			fmt.Printf("  피연산자[%d]: Type = %d\n", i, insn.X86.Operands[i].Type)
 			// 첫 번째 피연산자가 레지스터이고, rax 또는 eax인지 확인합니다.
-			if op0.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
+			/*if op0.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
 				// 두 번째 피연산자가 즉시값인지 확인합니다.
 				if op1.Type == gapstone.X86_OP_IMM {
 					// op1의 Imm 필드에서 값을 가져옵니다.
@@ -68,7 +70,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 				op1.Type == gapstone.X86_OP_REG && op1.Reg == gapstone.X86_REG_EAX {
 				lastRaxValue = 0
 			}
-		}
+		}*/
 
 		// --- 2. syscall 명령어 탐지 ---
 		if insn.Mnemonic == "syscall" {
