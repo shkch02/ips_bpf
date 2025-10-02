@@ -26,7 +26,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			fmt.Println("디버깅용 출력:,insn.X86 == nil, continue")
 			continue
 		}
-		fmt.Println("디버깅용 출력:forloop 들어왔음") //디버깅용 출력
+		fmt.Println("디버깅용 출력 forloop 내부임 ---------------------") //디버깅용 출력
 		fmt.Println("디버깅용 출력:insn.Id", insn.Id)
 		fmt.Println("디버깅용 출력:insn.Address", insn.Address)
 		fmt.Println("디버깅용 출력:insn.Size", insn.Size)
