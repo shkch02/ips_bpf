@@ -79,12 +79,18 @@ func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
 		return nil, 0, fmt.Errorf(".text 섹션 데이터 읽기 실패: %v", err)
 	}
 
-	//gapstone
+	//gapstone 버전설정
 	engine, err := gapstone.New(
 		gapstone.CS_ARCH_X86,
 		gapstone.CS_MODE_64,
 	)
 	fmt.Println("ARCH_X86_64 , MODE_64")
+
+	// 디테일 옵션 활성화
+	err = engine.SetOption(gapstone.CS_OPT_DETAIL, gapstone.CS_OPT_ON)
+	if err != nil {
+		return nil, 0, fmt.Errorf("Capstone 옵션 설정 실패: %w", err)
+	}
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("Capstone 엔진 생성 실패: %w", err)
