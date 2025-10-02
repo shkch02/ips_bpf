@@ -66,9 +66,9 @@ func (a *ELFAnalyzer) Section(name string) *elf.Section {
 	return a.elfFile.Section(name)
 }
 
-// ExtractAsmCode : .text 섹션의 어셈블리 코드와 시작 주소 추출
+// ExtractAsmCode : .text 섹션의 어셈블리 코드와 시작 주소 추출, gapstone.Instruction 슬라이스와 시작 주소 반환
 func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
-	textSect := a.Section(".text")
+	textSect := a.Section(".text") //입력받는걸로 리팩토링 할수도?
 	if textSect == nil {
 		return nil, 0, fmt.Errorf(".text 섹션을 찾을 수 없습니다. (섹션이 스트립되었을 수 있습니다)")
 	}
