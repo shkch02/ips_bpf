@@ -26,14 +26,14 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			fmt.Println("디버깅용 출력:,insn.X86 == nil, continue")
 			continue
 		}
-		fmt.Println("디버깅용 출력:,forloop 들어왔음") //디버깅용 출력
-		fmt.Println("디버깅용 출력:,insn.Id", insn.Id)
-		fmt.Println("디버깅용 출력:,insn.Address", insn.Address)
-		fmt.Println("디버깅용 출력:,insn.Size", insn.Size)
-		fmt.Println("디버깅용 출력:,insn.Bytes", insn.Bytes)
-		fmt.Println("디버깅용 출력:,insn.Mnemonic", insn.Mnemonic)
-		fmt.Printf("디버깅용 출력:,insn.OpStr%+v", insn.OpStr)
-		fmt.Println("디버깅용 출력:,insn.X86.Prefix", insn.X86.Prefix) //
+		fmt.Println("디버깅용 출력:forloop 들어왔음") //디버깅용 출력
+		fmt.Println("디버깅용 출력:insn.Id", insn.Id)
+		fmt.Println("디버깅용 출력:insn.Address", insn.Address)
+		fmt.Println("디버깅용 출력:insn.Size", insn.Size)
+		fmt.Println("디버깅용 출력:insn.Bytes", insn.Bytes)
+		fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
+		fmt.Println("디버깅용 출력:insn.OpStr", insn.OpStr)
+		fmt.Println("디버깅용 출력:insn.X86.Prefix", insn.X86.Prefix) //
 
 		//디버깅용 출력
 		// --- 1. rax 값 추적 ---
