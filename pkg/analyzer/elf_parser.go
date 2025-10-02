@@ -96,10 +96,11 @@ func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
 	fmt.Printf("Capstone 버전: %d.%d\n", maj, min)
 
 	// 디테일 옵션 활성화
-	err = engine.SetOption(gapstone.CS_OPT_DETAIL, gapstone.CS_OPT_ON)
+	/*err = engine.SetOption(gapstone.CS_OPT_DETAIL, gapstone.CS_OPT_ON)
 	if err != nil {
 		return nil, 0, fmt.Errorf("Capstone 옵션 설정 실패: %w", err)
-	}
+	}*/
+
 	//gapstone를 이용한 디스어셈블
 	insns, err := engine.Disasm(data, startAddr, 0)
 	if err != nil {
