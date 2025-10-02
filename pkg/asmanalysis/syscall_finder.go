@@ -7,6 +7,9 @@ import (
 )
 
 //왜 커밋안되냐고
+//
+//
+//
 
 // SyscallInfo는 발견된 시스템 콜의 정보를 담는 구조체입니다.
 type SyscallInfo struct {
