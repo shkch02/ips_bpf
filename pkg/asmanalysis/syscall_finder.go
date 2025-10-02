@@ -40,31 +40,32 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		fmt.Printf("디버깅용 출력:insn.Address%x", insn.Address)
 		//fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
 		fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: s : [%s] , +v : [%+v] ,v : [%v] \n", insn.OpStr, insn.OpStr, insn.OpStr)
+
 		// 1-1. 'mov rax, 0xN' 또는 'mov eax, 0xN' 패턴 찾기
 		if insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 {
-			// insn.X86.Operands는 X86Operand 구조체의 슬라이스입니다 [3].
-			op0 := insn.X86.Operands
-			op1 := insn.X86.Operands[5]
+			// insn.X86.Operands는 슬라이스이므로, 인덱스로 각 피연산자에 접근합니다.
+			op0 := insn.X86.Operands    // 첫 번째 피연산자 (destination)
+			op1 := insn.X86.Operands[2] // 두 번째 피연산자 (source)
 
-			// 첫 번째 피연산자가 레지스터 타입(X86_OP_REG)이고 [4],
-			// 그 레지스터가 rax 또는 eax인지 확인합니다.
-			if op0.X86Operand.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
-				// 두 번째 피연산자가 즉시값 타입(X86_OP_IMM)인지 확인합니다 [4].
+			// 첫 번째 피연산자가 레지스터이고, rax 또는 eax인지 확인합니다.
+			if op0.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
+				// 두 번째 피연산자가 즉시값인지 확인합니다.
 				if op1.Type == gapstone.X86_OP_IMM {
-					// 즉시값(Imm)을 lastRaxValue에 저장합니다 [4, 6].
+					// op1의 Imm 필드에서 값을 가져옵니다.
 					lastRaxValue = op1.Imm
 				}
 			}
 		}
 
-		// 1-2. 'xor eax, eax' 패턴 찾기 (rax를 0으로 만드는 흔한 방법)
+		// 1-2. 'xor eax, eax' 패턴 찾기
 		if insn.Mnemonic == "xor" && len(insn.X86.Operands) == 2 {
+			// 여기도 마찬가지로 인덱스를 사용합니다.
 			op0 := insn.X86.Operands
-			op1 := insn.X86.Operands[5]
+			op1 := insn.X86.Operands[2]
 
-			// 두 피연산자가 동일한 레지스터를 가리키는지 확인합니다.
-			// 특히 'xor eax, eax'는 rax/eax를 0으로 만듭니다.
-			if op0.Type == gapstone.X86_OP_REG && op0.Reg == gapstone.X86_REG_EAX && op1.Reg == gapstone.X86_REG_EAX {
+			// 'xor eax, eax'는 두 피연산자가 모두 eax인 경우입니다.
+			if op0.Type == gapstone.X86_OP_REG && op0.Reg == gapstone.X86_REG_EAX &&
+				op1.Type == gapstone.X86_OP_REG && op1.Reg == gapstone.X86_REG_EAX {
 				lastRaxValue = 0
 			}
 		}
