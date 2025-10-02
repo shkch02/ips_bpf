@@ -37,6 +37,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		//fmt.Println("디버깅용 출력:insn.Size", insn.Size)
 		//fmt.Println("디버깅용 출력:insn.Bytes", insn.Bytes)
 		fmt.Println("디버깅용 출력:insn.Mnemonic", insn.Mnemonic)
+		fmt.Println("디버깅용 출력:insn.X86.Operands", insn.X86.Operands)
 		fmt.Println("디버깅용 출력:insn.OpStr", insn.OpStr)
 		//fmt.Println("디버깅용 출력:insn.X86.Prefix", insn.X86.Prefix) //
 
