@@ -35,12 +35,12 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		}
 
 		//fmt.Println("디버깅용 출력 forloop 내부임 ---------------------") //디버깅용 출력
-		//fmt.Printf("디버깅용 출력:insn.Address%x", insn.Address)
-		fmt.Print("insn.Mnemonic: ", insn.Mnemonic)
+		fmt.Print("디버깅용 출력:insn.Address: ", insn.Address)
+		fmt.Print(" insn.Mnemonic: ", insn.Mnemonic)
 		//fmt.Printf("디버깅용 출력:insn.OpStr의 실제 값: s : [%s] , +v : [%+v] ,v : [%v] \n", insn.OpStr, insn.OpStr, insn.OpStr)
 		if insn.X86 != nil {
 			fmt.Print("\tinsn.X86.Operands[0].Type:", insn.X86.Operands[0].Type)
-			fmt.Print("\tinsn.X86.Operands:", insn.X86.Operands, "\t", "insn.OpStr", insn.OpStr, "\n") //디버깅
+			fmt.Print("\tinsn.X86.Operands:", insn.X86.Operands, "\t", "insn.OpStr: ", insn.OpStr, "\n") //디버깅
 
 			if insn.Mnemonic == "mov" {
 				MovOperandCount++
