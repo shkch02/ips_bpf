@@ -41,16 +41,16 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		if insn.X86 != nil {
 			fmt.Print("\tinsn.X86.Operands[0].Type:", insn.X86.Operands[0].Type)
 			fmt.Print("\tinsn.X86.Operands:", insn.X86.Operands, "\t", "insn.OpStr", insn.OpStr, "\n") //디버깅
-		}
-		if insn.Mnemonic == "mov" {
-			MovOperandCount++
-			if len(insn.X86.Operands) == 2 {
-				MovOperandLen2++
-			}
-		}
-		fmt.Println("MovOperandCount:", MovOperandCount)
-		fmt.Println("MovOperandLen2", MovOperandLen2)
 
+			if insn.Mnemonic == "mov" {
+				MovOperandCount++
+				if len(insn.X86.Operands) == 2 {
+					MovOperandLen2++
+				}
+			}
+			fmt.Println("MovOperandCount:", MovOperandCount)
+			fmt.Println("MovOperandLen2", MovOperandLen2)
+		}
 		// insn.X86.Operands는 슬라이스이므로, 인덱스로 각 피연산자에 접근합니다.
 		//op0 := insn.X86.Operands    // 첫 번째 피연산자 (destination)
 		//op1 := insn.X86.Operands[2] // 두 번째 피연산자 (source)
