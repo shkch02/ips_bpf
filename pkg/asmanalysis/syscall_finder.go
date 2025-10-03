@@ -45,36 +45,24 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		fmt.Println("OPerands", insn.X86.Operands)
 		fmt.Println("Mnemonic", insn.Mnemonic)*/
 
-		// 1-1. 'mov rax, 0xN' 또는 'mov eax, 0xN' 패턴 찾기
-		if insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 {
-			// insn.X86.Operands는 슬라이스이므로, 인덱스로 각 피연산자에 접근합니다.
-			//fmt.Println(insn.X86.Operands[0].Type) 접근 가이드
-			op0 := insn.X86.Operands[0] // 첫 번째 피연산자 (destination)
-			op1 := insn.X86.Operands[1] // 두 번째 피연산자 (source)
+		// 1-1. 'mov rax, 0xN' 또는 'mov eax, 0xN' 패턴 찾기, 메모리 조회하여 값을 가져오는 패턴은 무시 ,
+		if insn.Mnemonic == "mov" && len(insn.X86.Operands) == 2 &&
+			insn.X86.Operands[0].Type == gapstone.X86_OP_REG && //.Type 비교연산을 1이 아니라 gapstone.X86_OP_REG 바꾸는게 낫다고함,,
+			(insn.X86.Operands[0].Reg == gapstone.X86_REG_RAX || insn.X86.Operands[0].Reg == gapstone.X86_REG_EAX) &&
+			insn.X86.Operands[1].Type == 2 {
 
-			// 첫 번째 피연산자가 레지스터이고, rax 또는 eax인지 확인합니다.
-			if op0.Type == gapstone.X86_OP_REG && (op0.Reg == gapstone.X86_REG_RAX || op0.Reg == gapstone.X86_REG_EAX) {
-				// 두 번째 피연산자가 즉시값인지 확인합니다.
-				if op1.Type == gapstone.X86_OP_IMM {
-					// op1의 Imm 필드에서 값을 가져옵니다.
-					lastRaxValue = op1.Imm
-				}
-			}
+			// rax나 eax에서 두번째 피연산자가 즉시값(Imm)인 경우 해당 값 저장(아마 시스템콜 인덱스일것)
+			lastRaxValue = insn.X86.Operands[1].Imm
+
 		}
 
 		// 1-2. 'xor eax, eax' 패턴 찾기
-		if insn.Mnemonic == "xor" && len(insn.X86.Operands) == 2 {
-			// 여기도 마찬가지로 인덱스를 사용합니다.
-			op0 := insn.X86.Operands[0]
-			op1 := insn.X86.Operands[1]
-
-			// 'xor eax, eax'는 두 피연산자가 모두 eax인 경우입니다.
-			if op0.Type == gapstone.X86_OP_REG && op0.Reg == gapstone.X86_REG_EAX &&
-				op1.Type == gapstone.X86_OP_REG && op1.Reg == gapstone.X86_REG_EAX {
-				lastRaxValue = 0
-			}
+		if insn.Mnemonic == "xor" &&
+			len(insn.X86.Operands) == 2 &&
+			insn.X86.Operands[0].Reg == gapstone.X86_REG_EAX &&
+			insn.X86.Operands[1].Reg == gapstone.X86_REG_EAX {
+			//read 시스템콜임
 		}
-
 		// --- 2. syscall 명령어 탐지 ---
 		if insn.Mnemonic == "syscall" {
 			// syscall을 찾았을 때, 이전에 rax 값이 설정된 적이 있다면
