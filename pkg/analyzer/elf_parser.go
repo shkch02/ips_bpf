@@ -1,12 +1,11 @@
 // pkg/analyzer/elf_parser.go
-package s
+package analyzer
 
 import (
 	"bytes"
 	"debug/elf"
 	"encoding/binary"
 	"fmt"
-	"ips_bpf/static-analyzer/pkg/analyzer"
 
 	//"io"
 	"github.com/knightsc/gapstone" //디스어셈블 라이브러리
@@ -65,7 +64,7 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 }
 
 func (a *ELFAnalyzer) FindSyscallSymbolAddr() (uint64, error) {
-	symbolNames, err := analyzer.ExtractDynamicSymbols()
+	symbolNames, err := a.ExtractDynamicSymbols()
 
 	var syscallsymbolindex uint32
 	// 2. "syscall"와 이름이 일치하는 심볼을 찾고, 해당 심볼의 인덱스를 반환
