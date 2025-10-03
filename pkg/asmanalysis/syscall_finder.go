@@ -68,7 +68,7 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 		}
 		// --- 2. syscall 명령어 탐지 ---
 
-		var indirectcall bool = (SyscallAddr == insn.Address+insn.X86Instruction[0].X86MemoryOperand.Disp+6)
+		var indirectcall bool = (SyscallAddr == insn.Address+insn.X86.Operand[0].X86MemoryOperand.Disp+6)
 		var directcall bool = true
 		var iscall bool = (insn.Mnemonic == "call")
 		if (iscall && indirectcall) || directcall {
