@@ -67,13 +67,11 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 			lastRaxValue = 0
 		}
 		// --- 2. syscall 명령어 탐지 ---
-		fmt.Println("analyzer.FindSyscallSymbolAddr: ",analyzer.FindSyscallSymbolAddr())
 
-		var indirectcall bool = (syscallAddr  == insn.Address + insn.X86[0].X86MemoryOperand.Disp + 6)
+		var indirectcall bool = (SyscallAddr == insn.Address+insn.X86[0].X86MemoryOperand.Disp+6)
 		var directcall bool = true
 		var iscall bool = (insn.Mnemonic == "call")
-		if (iscall && indirectcall) || directcall
-		{
+		if (iscall && indirectcall) || directcall {
 			// syscall을 찾았을 때, 이전에 rax 값이 설정된 적이 있다면
 			if lastRaxValue != -1 {
 				// 결과 목록에 추가
