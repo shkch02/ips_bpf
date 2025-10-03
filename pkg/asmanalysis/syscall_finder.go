@@ -89,6 +89,6 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 			}
 		}
 	}
-
+	fmt.Println(results)
 	return results, nil
 }
