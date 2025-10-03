@@ -1,9 +1,12 @@
 // pkg/analyzer/elf_parser.go
-package analyzer
+package s
 
 import (
+	"bytes"
 	"debug/elf"
+	"encoding/binary"
 	"fmt"
+	"ips_bpf/static-analyzer/pkg/analyzer"
 
 	//"io"
 	"github.com/knightsc/gapstone" //디스어셈블 라이브러리
@@ -61,22 +64,67 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 	return symbolNames, nil
 }
 
-func (a *ELFAnalyzer) FindSyscallSymbolIndex() (uint64, error) {
-	// 1. 동적 심볼들을 읽습니다.
-	dynamicSymbols, err := a.elfFile.DynamicSymbols()
-	if err != nil {
-		return 0, fmt.Errorf("동적 심볼을 읽을 수 없습니다: %w", err)
-	}
+func (a *ELFAnalyzer) FindSyscallSymbolAddr() (uint64, error) {
+	symbolNames, err := analyzer.ExtractDynamicSymbols()
 
+	var syscallsymbolindex uint32
 	// 2. "syscall"와 이름이 일치하는 심볼을 찾고, 해당 심볼의 인덱스를 반환
-	for _, sym := range dynamicSymbols {
-		if sym.Name == "syscall" {
-			address := sym.Value
-			fmt.Printf("디버깅출력 syscall 심볼 주소 찾음, 주소: 0x%x\n", address)
-			return address, nil
+	for i, sym := range symbolNames {
+		if sym == "syscall" {
+			// elf.File.DynamicSymbols()는 Index 1부터 시작하는 배열을 반환합니다.
+			// 실제 심볼 인덱스는 i+1 입니다. (Index 0은 UNDEF)
+			syscallsymbolindex = uint32(i + 1)
 		}
 	}
-	return 0, fmt.Errorf("'syscall@Base' 심볼을 찾을 수 없습니다")
+
+	// 재배치 엔트리를 읽음
+	relaDyn := a.Section(".rela.dyn")
+	if relaDyn == nil {
+		return 0, fmt.Errorf(".rela.dyn 섹션을 찾을 수 없습니다")
+	}
+
+	data, err := relaDyn.Data()
+	if err != nil {
+		// 오류 처리
+	}
+
+	// ⭐⭐ 4. 원시 데이터를 []elf.Rela64 목록으로 수동 파싱 ⭐⭐
+	var relocs []elf.Rela64
+	const relaSize = 24 // 64비트 Rela 엔트리 크기 (Off: 8, Info: 8, Addend: 8 바이트)
+
+	// 데이터 크기가 Rela 엔트리 크기의 배수인지 확인
+	if len(data)%relaSize != 0 {
+		return 0, fmt.Errorf("재배치 섹션 크기가 Rela 엔트리 크기의 배수가 아닙니다")
+	}
+
+	// ELF 파일의 바이트 순서를 사용합니다.
+	byteOrder := a.elfFile.ByteOrder
+
+	for i := 0; i < len(data); i += relaSize {
+		var rela64 elf.Rela64
+
+		// 바이트 슬라이스를 Rela64 구조체로 파싱
+		err := binary.Read(bytes.NewReader(data[i:i+relaSize]), byteOrder, &rela64)
+		if err != nil {
+			return 0, fmt.Errorf("Rela64 엔트리 파싱 오류: %w", err)
+		}
+		relocs = append(relocs, rela64)
+	}
+	// 3. 재배치 엔트리를 순회하며 조건에 맞는 것을 찾습니다.
+	for _, rel := range relocs {
+		// R_X86_64_GLOB_DAT (Type 6)은 GOT 엔트리를 채우기 위한 재배치 타입입니다.
+		// rel.Info의 하위 32비트가 타입, 상위 32비트가 심볼 인덱스입니다.
+		relType := elf.R_X86_64(rel.Info & 0xFFFFFFFF)
+		relSymIndex := uint32(rel.Info >> 32)
+
+		// 타입이 R_X86_64_GLOB_DAT 이고, 심볼 인덱스가 syscall@Base의 인덱스와 일치하는지 확인합니다.
+		if relType == elf.R_X86_64_GLOB_DAT && relSymIndex == syscallsymbolindex {
+			// rel.Off 필드가 바로 objdump에서 본 GOT 엔트리의 주소입니다.
+			return rel.Off, nil // 0x11a3c8 반환
+		}
+	}
+
+	return 0, fmt.Errorf("'syscall' 심볼주소을 찾을 수 없습니다")
 }
 
 // Section: 내부 elf.File의 Section 메서드를 호출, name에 해당하는 섹션 반환

@@ -97,9 +97,9 @@ func main() {
 	for _, asm := range insns {
 		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
 	}
-	SyscallAddr, err := analyzer.FindSyscallSymbolIndex()
+	SyscallAddr, err := analyzer.FindSyscallSymbolAddr()
 	if err != nil {
-		log.Printf("syscall 심볼 인덱스 찾기 중 오류 발생: %v", err)
+		log.Printf("syscall 심볼 주소 찾기 중 오류 발생: %v", err)
 	}
 
 	syscalls, err := asmanalysis.FindSyscalls(SyscallAddr, insns)
