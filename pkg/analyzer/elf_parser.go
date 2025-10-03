@@ -61,7 +61,7 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 	return symbolNames, nil
 }
 
-func (a *ELFAnalyzer) FindSyscallSymbolIndex() (uint32, error) {
+func (a *ELFAnalyzer) FindSyscallSymbolIndex() (uint64, error) {
 	// 1. 동적 심볼들을 읽습니다.
 	dynamicSymbols, err := a.elfFile.DynamicSymbols()
 	if err != nil {
@@ -69,10 +69,11 @@ func (a *ELFAnalyzer) FindSyscallSymbolIndex() (uint32, error) {
 	}
 
 	// 2. "syscall"와 이름이 일치하는 심볼을 찾고, 해당 심볼의 인덱스를 반환
-	for i, sym := range dynamicSymbols {
+	for _, sym := range dynamicSymbols {
 		if sym.Name == "syscall" {
-			fmt.Println("디버깅출력 syscall 심볼 인덱스 찾음, 인덱스:", i+1)
-			return uint32(i + 1), nil
+			address := sym.Value
+			fmt.Printf("디버깅출력 syscall 심볼 주소 찾음, 주소: 0x%x\n", address)
+			return address, nil
 		}
 	}
 	return 0, fmt.Errorf("'syscall@Base' 심볼을 찾을 수 없습니다")

@@ -18,7 +18,7 @@ type SyscallInfo struct {
 }
 
 // FindSyscalls는 디스어셈블된 명령어 목록을 분석하여 시스템 콜 호출을 찾습니다.
-func FindSyscalls(SyscallAddr uint32, instructions []gapstone.Instruction) ([]SyscallInfo, error) {
+func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 	var results []SyscallInfo
 	fmt.Println("FindSyscalls 디버깅용 출력")
 	// rax 레지스터의 마지막 값을 추적하기 위한 변수.
