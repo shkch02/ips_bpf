@@ -32,7 +32,7 @@ func main() {
 	}
 	defer analyzer.Close()
 
-	libs, err := analyzer.ExtractSharedLibs()
+	/*libs, err := analyzer.ExtractSharedLibs()
 	if err != nil {
 		// FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
 		if _, ok := err.(*elf.FormatError); !ok {
@@ -48,7 +48,7 @@ func main() {
 		for _, lib := range libs {
 			fmt.Printf("- %s\n", lib)
 		}
-	}
+	}*/
 
 	fmt.Println("----------------------------------------")
 
@@ -97,8 +97,12 @@ func main() {
 	for _, asm := range insns {
 		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
 	}
+	SyscallAddr, err := analyzer.FindSyscallSymbolIndex()
+	if err != nil {
+		log.Printf("syscall 심볼 인덱스 찾기 중 오류 발생: %v", err)
+	}
 
-	syscalls, err := asmanalysis.FindSyscalls(insns)
+	syscalls, err := asmanalysis.FindSyscalls(SyscallAddr, insns)
 	if err != nil {
 		log.Printf("systemcall 추출중 오류 발생: %v", err)
 	}

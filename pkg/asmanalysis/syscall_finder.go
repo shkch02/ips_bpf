@@ -18,7 +18,7 @@ type SyscallInfo struct {
 }
 
 // FindSyscalls는 디스어셈블된 명령어 목록을 분석하여 시스템 콜 호출을 찾습니다.
-func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
+func FindSyscalls(SyscallAddr uint32, instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 	var results []SyscallInfo
 	fmt.Println("FindSyscalls 디버깅용 출력")
 	// rax 레지스터의 마지막 값을 추적하기 위한 변수.
@@ -67,9 +67,9 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			lastRaxValue = 0
 		}
 		// --- 2. syscall 명령어 탐지 ---
-		if insn.Mnemonic == "call" &&
+		/*if insn.Mnemonic == "call" &&
 		(직접호출 비교문) ||
-		(간접호출 비교문)
+		(insn.Address + insn.X86[0].X86MemoryOperand.Disp + 6 == syscall 주소 어케 호출..?)
 		{
 			// syscall을 찾았을 때, 이전에 rax 값이 설정된 적이 있다면
 			if lastRaxValue != -1 {
@@ -86,7 +86,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 				// rax 값이 설정되지 않았는데 syscall이 호출된 경우
 				fmt.Printf("경고: 0x%x에서 rax 값이 설정되지 않은 syscall 호출 발견\n", insn.Address)
 			}
-		}
+		}*/
 	}
 
 	return results, nil
