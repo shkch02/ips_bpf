@@ -45,7 +45,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		if insn.Mnemonic == "mov" {
 			MovOperandCount++
 			if len(insn.X86.Operands) == 2 {
-				MovPoerandLen2++
+				MovOperandLen2++
 			}
 		}
 		fmt.Println("MovOperandCount:", MovOperandCount)
