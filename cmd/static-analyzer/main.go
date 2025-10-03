@@ -62,7 +62,7 @@ func main() {
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
 	} else {
-		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
+		fmt.Println("바이너리가 의존하는 동적 심볼 목록:") //syscall 여기서 발견됨
 		for _, sym := range symbols {
 			fmt.Printf("- %s\n", sym)
 		}
