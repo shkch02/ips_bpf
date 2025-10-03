@@ -67,7 +67,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			lastRaxValue = 0
 		}
 		// --- 2. syscall 명령어 탐지 ---
-		/*if insn.Mnemonic == "call" &&
+		if insn.Mnemonic == "call" &&
 		(직접호출 비교문) ||
 		(간접호출 비교문)
 		{
@@ -86,7 +86,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 				// rax 값이 설정되지 않았는데 syscall이 호출된 경우
 				fmt.Printf("경고: 0x%x에서 rax 값이 설정되지 않은 syscall 호출 발견\n", insn.Address)
 			}
-		}*/
+		}
 	}
 
 	return results, nil
