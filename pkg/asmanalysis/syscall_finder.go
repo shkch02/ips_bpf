@@ -21,6 +21,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 	//lastRaxValue := int64(-1)
 
 	var MovOperandCount int
+	var MovPoerandLen2 int
 
 	for _, insn := range instructions {
 		// X86 관련 정보가 없는 명령어 방어코드
@@ -42,7 +43,10 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			fmt.Print("\tinsn.X86.Operands:", insn.X86.Operands, "\t", "insn.OpStr", insn.OpStr, "\n") //디버깅
 		}
 		if insn.Mnemonic == "mov" {
-			MovOperandCount = len(insn.X86.Operands)
+			MovOperandCount++
+			if len(insn.X86.Operands) == 2 {
+				MovPoerandLen2++
+			}
 		}
 
 		// insn.X86.Operands는 슬라이스이므로, 인덱스로 각 피연산자에 접근합니다.
@@ -92,5 +96,6 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 		엉터리 알고리즘 */
 	}
 	fmt.Println(MovOperandCount)
+	fmt.Println(MovPoerandLen2)
 	return results, nil
 }
