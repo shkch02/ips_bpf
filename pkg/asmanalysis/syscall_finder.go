@@ -53,6 +53,7 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 
 			// rax나 eax에서 두번째 피연산자가 즉시값(Imm)인 경우 해당 값 저장(아마 시스템콜 인덱스일것)
 			lastRaxValue = insn.X86.Operands[1].Imm
+			fmt.Printf("디버깅용 출력:rax or eax에 있는 즉시값 가져옴, 값: %d\n", lastRaxValue)
 
 		}
 
@@ -62,6 +63,8 @@ func FindSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 			insn.X86.Operands[0].Reg == gapstone.X86_REG_EAX &&
 			insn.X86.Operands[1].Reg == gapstone.X86_REG_EAX {
 			//read 시스템콜임
+			fmt.Println("디버깅용 출력:rax or eax에 0 대입, read 시스템콜임")
+			lastRaxValue = 0
 		}
 		// --- 2. syscall 명령어 탐지 ---
 		if insn.Mnemonic == "syscall" {
