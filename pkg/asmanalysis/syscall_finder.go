@@ -78,7 +78,6 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 		//fmt.Printf("ifBool : %t indirectacll %t iscall %t\n",ifBool,indirectcall,iscall)
 
 		if (iscall && indirectcall) || directcall {
-			fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), "  합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
 			// syscall을 찾았을 때, 이전에 rax 값이 설정된 적이 있다면
 			if lastRaxValue != -1 {
 				// 결과 목록에 추가
@@ -86,7 +85,8 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 					Address: uint64(insn.Address), // 명령어의 주소 [1]
 					Number:  lastRaxValue,
 				})
-
+				fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), "  합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
+				fmt.Println("syscall 인덱스 Number:"  lastRaxValue)
 				// 선택사항: syscall을 처리했으므로 lastRaxValue를 초기화하여
 				// 다음 syscall에 영향을 주지 않도록 할 수 있습니다.
 				// lastRaxValue = -1
