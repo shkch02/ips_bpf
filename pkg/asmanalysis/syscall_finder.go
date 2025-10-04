@@ -53,7 +53,7 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 
 			// rax나 eax에서 두번째 피연산자가 즉시값(Imm)인 경우 해당 값 저장(아마 시스템콜 인덱스일것)
 			lastRaxValue = insn.X86.Operands[1].Imm
-			fmt.Printf("디버깅용 출력:rax or eax에 있는 즉시값 가져옴, 값: %d\n", lastRaxValue)
+			//fmt.Printf("디버깅용 출력:rax or eax에 있는 즉시값 가져옴, 값: %d\n", lastRaxValue)
 
 		}
 
@@ -63,7 +63,7 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 			insn.X86.Operands[0].Reg == gapstone.X86_REG_EAX &&
 			insn.X86.Operands[1].Reg == gapstone.X86_REG_EAX {
 			//read 시스템콜임
-			fmt.Println("디버깅용 출력:rax or eax에 0 대입, read 시스템콜임")
+			//fmt.Println("디버깅용 출력:rax or eax에 0 대입, read 시스템콜임")
 			lastRaxValue = 0
 		}
 		// --- 2. syscall 명령어 탐지 ---
@@ -85,8 +85,8 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 					Address: uint64(insn.Address), // 명령어의 주소 [1]
 					Number:  lastRaxValue,
 				})
-				fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), "  합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
-				fmt.Println("syscall 인덱스 Number:",  lastRaxValue)
+				//fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), "  합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
+				//fmt.Println("syscall 인덱스 Number:",  lastRaxValue)
 				// 선택사항: syscall을 처리했으므로 lastRaxValue를 초기화하여
 				// 다음 syscall에 영향을 주지 않도록 할 수 있습니다.
 				// lastRaxValue = -1

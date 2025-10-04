@@ -52,7 +52,7 @@ func main() {
 
 	fmt.Println("----------------------------------------")
 
-	symbols, err := analyzer.ExtractDynamicSymbols()
+	symbols, err := analyzer.ExtractDynamicSymbols() //이거 필터링하면될듯
 	if err != nil {
 		if _, ok := err.(*elf.FormatError); !ok {
 			log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
@@ -62,7 +62,7 @@ func main() {
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
 	} else {
-		fmt.Println("바이너리가 의존하는 동적 심볼 목록:") //syscall 여기서 발견됨
+		fmt.Println("바이너리가 의존하는 동적 심볼 목록:") 
 		for _, sym := range symbols {
 			fmt.Printf("- %s\n", sym)
 		}
@@ -88,15 +88,16 @@ func main() {
 			}
 		}*/
 
-	insns, startAddr, err := analyzer.ExtractAsmCode()
+	/*insns, startAddr, err := analyzer.ExtractAsmCode()
 	if err != nil {
 		log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
 	}
-
 	fmt.Printf("시작주소 : 0x%x\n", startAddr)
 	for _, asm := range insns {
 		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
-	}
+	}*/
+
+	/*()
 	SyscallAddr, err := analyzer.FindSyscallSymbolAddr()
 	if err != nil {
 		log.Printf("syscall 심볼 주소 찾기 중 오류 발생: %v", err)
@@ -105,7 +106,7 @@ func main() {
 	syscalls, err := asmanalysis.FindSyscalls(SyscallAddr, insns)
 	if err != nil {
 		log.Printf("systemcall 추출중 오류 발생: %v", err)
-	}
+	}*/
 
 	fmt.Println("발견된 시스템 콜 목록:")
 	for _, sc := range syscalls {
