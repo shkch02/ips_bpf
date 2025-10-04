@@ -79,9 +79,8 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 				results = append(results, SyscallInfo{
 					Address: uint64(insn.Address), // 명령어의 주소 [1]
 					Number:  lastRaxValue,
-					fmt.Println("디버깅용 출력 result: "results)
 				})
-
+				fmt.Println("디버깅용 출력 result: "results)
 				// 선택사항: syscall을 처리했으므로 lastRaxValue를 초기화하여
 				// 다음 syscall에 영향을 주지 않도록 할 수 있습니다.
 				// lastRaxValue = -1
