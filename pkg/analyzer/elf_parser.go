@@ -41,13 +41,10 @@ func (a *ELFAnalyzer) ExtractDynamicSymbols() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("동적 심볼 추출 실패: %w", err)
 	}
-	//디버깅
-	fmt.Println
 
 	symbolNames := make([]string, 0, len(dynamicSymbols))
 	for _, sym := range dynamicSymbols {
-		//디버깅
-		fmt.Println("dynamicSymbols :",dynamicSymbols)
+		fmt.Println("디버깅 출력 dynamicSymbols :",dynamicSymbols)
 		symbolNames = append(symbolNames, sym.Name)
 		fmt.Println("symbolNames :",symbolNames)
 	}
