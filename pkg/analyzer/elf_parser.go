@@ -44,9 +44,7 @@ func (a *ELFAnalyzer) ExtractDynamicSymbols() ([]string, error) {
 
 	symbolNames := make([]string, 0, len(dynamicSymbols))
 	for _, sym := range dynamicSymbols {
-		fmt.Println("디버깅 출력 dynamicSymbols :",dynamicSymbols)
 		symbolNames = append(symbolNames, sym.Name)
-		fmt.Println("symbolNames :",symbolNames)
 	}
 	return symbolNames, nil
 }
