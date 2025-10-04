@@ -73,11 +73,12 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 		var iscall bool = (insn.Mnemonic == "call")
 
 		//디버그
-		fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), " +6 : 6 , 합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
+
 		var ifBool bool = (iscall && indirectcall) || directcall
-		fmt.Printf("ifBool : %t indirectacll %t iscall %t\n",ifBool,indirectcall,iscall)
+		//fmt.Printf("ifBool : %t indirectacll %t iscall %t\n",ifBool,indirectcall,iscall)
 
 		if (iscall && indirectcall) || directcall {
+			fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), "  합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
 			// syscall을 찾았을 때, 이전에 rax 값이 설정된 적이 있다면
 			if lastRaxValue != -1 {
 				// 결과 목록에 추가
