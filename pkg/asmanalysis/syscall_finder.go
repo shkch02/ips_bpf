@@ -86,7 +86,7 @@ func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]Sy
 					Number:  lastRaxValue,
 				})
 				fmt.Println("디버깅용 출력: SyscallAddr", SyscallAddr, " unit64(insn.Address): ", uint64(insn.Address), " uint64(insn.X86.Operands[0].Mem.Disp): ", uint64(insn.X86.Operands[0].Mem.Disp), "  합: ", uint64(insn.Address)+uint64(insn.X86.Operands[0].Mem.Disp)+6)
-				fmt.Println("syscall 인덱스 Number:"  lastRaxValue)
+				fmt.Println("syscall 인덱스 Number:",  lastRaxValue)
 				// 선택사항: syscall을 처리했으므로 lastRaxValue를 초기화하여
 				// 다음 syscall에 영향을 주지 않도록 할 수 있습니다.
 				// lastRaxValue = -1
