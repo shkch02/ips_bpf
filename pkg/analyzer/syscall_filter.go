@@ -29,24 +29,22 @@ func init() {
 	}
 }
 
-
-//이거 바꿔야함 /proc/kallsym는 커널용이고, 지금은 man 2 syscalls 파싱해서 얻어야할거같음 generate_bpf도 해당 테이블 사용함
 func parseMan() ([]string, error) {
 	fmt.Println("Parsing 'man 2 syscalls' to get the list of syscalls...")
 	
-	// 'man' 명령어의 출력이 시스템 언어 설정에 영향을 받지 않도록 로케일을 'C' (영어)로 설정합니다.
+	// 'man' 명령어의 출력이 시스템 언어 설정에 영향을 받지 않도록 로케일을 'C' (영어)로 설정
 	cmd := exec.Command("man", "2", "syscalls")
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
 
-	// 'man' 명령어를 실행하고 결과를 가져옵니다.
+	// 'man' 명령어를 실행하고 결과 저장
 	output, err := cmd.Output()
 	if err != nil {
-		// 'man' 명령어가 없거나 'manpages-dev' 같은 패키지가 설치되지 않은 경우 에러가 발생합니다.
+		// 'man' 명령어가 없거나 'manpages-dev' 같은 패키지가 설치되지 않은 경우 에러처리
 		return nil, fmt.Errorf("'man 2 syscalls' command failed. Is 'manpages-dev' (or equivalent) installed? original error: %w", err)
 	}
 
 	// 필터링할 키워드 목록 (소문자로 비교)
-	// 특정 아키텍처 전용이거나 더 이상 사용되지 않는 시스템 콜을 제외합니다.
+	// x86만 고려, 나머지 모두 제외
 	excludeKeywords := []string{
 		"alpha", "arc", "arm", "avr32", "blackfin", "csky", "ia-64", "m68k",
 		"metag", "mips", "openrisc", "parisc", "powerpc", "risc-v", "s390",
@@ -54,46 +52,46 @@ func parseMan() ([]string, error) {
 		"not on x86", "removed in", "deprecated",
 	}
 
-	// 중복을 피하기 위해 map을 set처럼 사용합니다.
+	// 중복을 피하기 위해 map을 set처럼 사용
 	syscallSet := make(map[string]struct{})
 	inTable := false
 
-	// 정규표현식을 미리 컴파일하여 성능을 높입니다. 'syscall_name(2)' 패턴을 찾습니다.
+	// 정규표현식 미리 컴파일하고, 'syscall_name(2)' 패턴 검색
 	re := regexp.MustCompile(`^\s*(\w+)\(2\)`)
 
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// 테이블 시작점을 찾습니다.
+		// 시스템콜 테이블 시작점
 		if !inTable && strings.Contains(line, "System call") && strings.Contains(line, "Kernel") && strings.Contains(line, "Notes") {
 			inTable = true
 			continue
 		}
 
-		// 테이블 종료점을 찾습니다.
+		// 시스템콜 테이블 종료지점
 		if inTable && strings.TrimSpace(line) == "SEE ALSO" {
 			break
 		}
 
 		if inTable {
-			// 빈 줄이나 테이블 구분선은 건너뜁니다.
+			// 빈 줄이나 테이블 구분선은 스팁
 			if strings.TrimSpace(line) == "" || strings.Contains(line, "──────") {
 				continue
 			}
 
-			// 정규표현식으로 시스템 콜 이름을 추출합니다.
+			// 정규표현식으로 시스템 콜 이름을 추출하는 부분
 			matches := re.FindStringSubmatch(line)
 			if matches == nil || len(matches) < 2 {
 				continue
 			}
 
 			name := matches[1]
-			// 시스템 콜 이름 이후의 'Notes' 부분을 추출합니다.
+			// 시스템 콜 이름 이후의 'Notes' 부분을 추출
 			notesIndex := re.FindStringIndex(line)[1]
 			notes := strings.ToLower(strings.TrimSpace(line[notesIndex:]))
 
-			// 'Notes'에 제외 키워드가 있는지 확인합니다.
+			// 'Notes'에 제외 키워드가 있는지 확인
 			isExcluded := false
 			if notes != "" {
 				for _, keyword := range excludeKeywords {
@@ -107,6 +105,11 @@ func parseMan() ([]string, error) {
 			if !isExcluded {
 				syscallSet[name] = struct{}{}
 			}
+
+			 // 최적화: SEE ALSO까지 넘어가면서 쓸데없는 코드들이 자꾸 들어감, 그냥 xtensa까지만 하고 종료
+            if name == "xtensa" {
+                break
+            }
 		}
 	}
 
@@ -115,18 +118,17 @@ func parseMan() ([]string, error) {
 	}
 	
 	if len(syscallSet) == 0 {
-		// man 페이지에서 유효한 시스템 콜을 하나도 파싱하지 못한 경우 경고를 반환할 수 있습니다.
-		// 여기서는 빈 리스트와 nil 에러를 반환하여 호출자가 처리하도록 합니다.
+		// man 페이지 파싱실패, 아래 getStatocSyscallList()목록 사용하게됨
 		fmt.Println("\n[WARNING] Could not parse any valid syscalls from man page.")
 	}
 
-	// map의 키(시스템 콜 이름)를 슬라이스로 변환합니다.
+	// map의 키(시스템 콜 이름)를 슬라이스로 변환
 	syscalls := make([]string, 0, len(syscallSet))
 	for name := range syscallSet {
 		syscalls = append(syscalls, name)
 	}
 
-	// 알파벳순으로 정렬합니다.
+	// 알파벳순 정렬
 	sort.Strings(syscalls)
 	
 	fmt.Printf("Successfully parsed %d filtered syscalls from man page.\n", len(syscalls))
