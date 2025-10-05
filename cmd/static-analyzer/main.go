@@ -72,7 +72,7 @@ func main() {
 	fmt.Println("----------------------------------------")
 
 	//받은 심볼 슬라이스와 시스템콜 비교해서 시스템콜인 목록만 남기기,  안에서 set해시 활용 
-	expectSyscalls,err := analyzer.FilterSyscalls(symbols)
+	expectSyscalls := analyzer.FilterSyscalls(symbols)
 	
 	if len(expectSyscalls) > 0 {
 		fmt.Println("추출된 시스템 콜 목록:")
