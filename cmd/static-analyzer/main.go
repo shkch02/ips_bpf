@@ -52,7 +52,7 @@ func main() {
 
 	fmt.Println("----------------------------------------")
 
-	symbols, err := analyzer.ExtractDynamicSymbols() //이거 필터링하면될듯
+	symbols, err := analyzer.ExtractDynamicSymbols() //이거 필터링하면됨
 	if err != nil {
 		if _, ok := err.(*elf.FormatError); !ok {
 			log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
@@ -70,7 +70,7 @@ func main() {
 
 	fmt.Println("----------------------------------------")
 
-	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현해
+	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현
 	/*symbols, err := analyzer.ExtractSymbols()
 		if err != nil {
 		    if _, ok := err.(*elf.FormatError); !ok {

@@ -25,7 +25,7 @@ func New(filePath string) (*ELFAnalyzer, error) {
 	return &ELFAnalyzer{elfFile: elfFile}, nil
 }
 
-// Close :  ELF 파일을 닫습니다. defer와 함께 사용해야 합니다.
+// Close :  ELF 파일을 닫음. defer와 함께 사용.
 func (a *ELFAnalyzer) Close() {
 	a.elfFile.Close()
 }
