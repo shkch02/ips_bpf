@@ -26,6 +26,8 @@ func init() {
 	}
 }
 
+
+//이거 바꿔야함 /proc/kallsym는 커널용이고, 지금은 man 2 syscalls 파싱해서 얻어야할거같음 generate_bpf도 해당 테이블 사용했던거 같은데 확인필요
 func loadSyscallsFromKallsyms() ([]string, error) {
 	file, err := os.Open("/proc/kallsyms")
 	if err != nil {
