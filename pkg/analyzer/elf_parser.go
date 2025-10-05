@@ -42,9 +42,11 @@ func (a *ELFAnalyzer) ExtractDynamicSymbols() ([]string, error) {
 		return nil, fmt.Errorf("동적 심볼 추출 실패: %w", err)
 	}
 
-	symbolNames := make([]string, 0, len(dynamicSymbols))
+	symbolNames := make([]string, 0, len(dynamicSymbols)) //make(type, 초기 길이, 용량) 슬라이드 생성함수
 	for _, sym := range dynamicSymbols {
-		symbolNames = append(symbolNames, sym.Name)
+		//디버깅, 해당 정보 쓸데없을거 같긴한데,,,
+		fmt.Pinrtln("sym.info: ",sym.Info,"sym.other: ",sym.other)
+		symbolNames = append(symbolNames, sym.Name) //append(대상 슬라이스, 추가할 값)슬라이스 추가 함수
 	}
 	return symbolNames, nil
 }
