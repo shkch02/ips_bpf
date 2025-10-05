@@ -7,6 +7,7 @@ package main
 
 import (
 	"debug/elf"
+	"encoding/json" 
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
 	//"ips_bpf/static-analyzer/pkg/asmanalysis"
@@ -69,6 +70,38 @@ func main() {
 	}
 
 	fmt.Println("----------------------------------------")
+
+	//받은 심볼 슬라이스와 시스템콜 비교해서 시스템콜인 목록만 남기기,  안에서 set해시 활용 
+	expectSyscalls,err := analyzer.FilterSyscall(symbols)
+	
+	if len(expectSyscalls) > 0 {
+		fmt.Println("추출된 시스템 콜 목록:")
+		for _, sym := range expectSyscalls {
+			fmt.Printf("- %s\n", sym)
+		}
+	} else {
+		fmt.Println("의존하는 시스템 콜을 찾지 못했습니다.")
+	}
+
+
+	//json으로 변환
+	fmt.Println("JSON 출력:")
+	// json.MarshalIndent를 사용하여 사람이 보기 좋게 포맷팅된 JSON 생성
+	jsonData, err := json.MarshalIndent(expectSyscalls, "", "  ")
+	if err != nil {
+		log.Fatalf("JSON 변환 오류: %v", err)
+	}
+
+	// []byte 타입의 jsonData를 string으로 변환하여 출력
+	fmt.Println(string(jsonData))
+
+
+
+
+
+
+
+
 
 	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현
 	/*symbols, err := analyzer.ExtractSymbols()
