@@ -5,6 +5,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -13,7 +16,7 @@ var syscallSet = make(map[string]struct{})
 
 func init() {
 	//proc/kallsyms에서 동적으로 시스템 콜 목록추출
-	syscalls, err := loadSyscallsFromKallsyms()
+	syscalls, err := parseMan()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "경고: /proc/kallsyms에서 시스템 콜 목록을 동적으로 로드하지 못했습니다: %v\n", err)
 		fmt.Fprintln(os.Stderr, "미리 정의된 정적 시스템 콜 목록을 사용합니다.")
@@ -28,45 +31,108 @@ func init() {
 
 
 //이거 바꿔야함 /proc/kallsym는 커널용이고, 지금은 man 2 syscalls 파싱해서 얻어야할거같음 generate_bpf도 해당 테이블 사용함
-func loadSyscallsFromKallsyms() ([]string, error) {
-	file, err := os.Open("/proc/kallsyms")
+func parseMan() ([]string, error) {
+	fmt.Println("Parsing 'man 2 syscalls' to get the list of syscalls...")
+	
+	// 'man' 명령어의 출력이 시스템 언어 설정에 영향을 받지 않도록 로케일을 'C' (영어)로 설정합니다.
+	cmd := exec.Command("man", "2", "syscalls")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+
+	// 'man' 명령어를 실행하고 결과를 가져옵니다.
+	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("'/proc/kallsyms' 파일을 열 수 없습니다: %w", err)
+		// 'man' 명령어가 없거나 'manpages-dev' 같은 패키지가 설치되지 않은 경우 에러가 발생합니다.
+		return nil, fmt.Errorf("'man 2 syscalls' command failed. Is 'manpages-dev' (or equivalent) installed? original error: %w", err)
 	}
-	defer file.Close()
 
-	var foundSyscalls []string
-	scanner := bufio.NewScanner(file)
+	// 필터링할 키워드 목록 (소문자로 비교)
+	// 특정 아키텍처 전용이거나 더 이상 사용되지 않는 시스템 콜을 제외합니다.
+	excludeKeywords := []string{
+		"alpha", "arc", "arm", "avr32", "blackfin", "csky", "ia-64", "m68k",
+		"metag", "mips", "openrisc", "parisc", "powerpc", "risc-v", "s390",
+		"sh", "sparc", "xtensa", "tile",
+		"not on x86", "removed in", "deprecated",
+	}
 
-	const prefix = "__x64_sys_"
+	// 중복을 피하기 위해 map을 set처럼 사용합니다.
+	syscallSet := make(map[string]struct{})
+	inTable := false
 
-	// 파일을 한 줄씩 스캔합
+	// 정규표현식을 미리 컴파일하여 성능을 높입니다. 'syscall_name(2)' 패턴을 찾습니다.
+	re := regexp.MustCompile(`^\s*(\w+)\(2\)`)
+
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
 		line := scanner.Text()
-		fields := strings.Fields(line)
 
-		// 라인이 비어있거나 필드가 충분하지 않으면 건너뜀
-		if len(fields) < 3 {
+		// 테이블 시작점을 찾습니다.
+		if !inTable && strings.Contains(line, "System call") && strings.Contains(line, "Kernel") && strings.Contains(line, "Notes") {
+			inTable = true
 			continue
 		}
-		
-		symbolName := fields[2]
-		if strings.HasPrefix(symbolName, prefix) {// 심볼 이름이 "__x64_sys_"로 시작하는지 확인
-			syscallName := strings.TrimPrefix(symbolName, prefix)// 접두사를 제거하여 순수한 시스템 콜 이름만 추출
-			foundSyscalls = append(foundSyscalls, syscallName)
+
+		// 테이블 종료점을 찾습니다.
+		if inTable && strings.TrimSpace(line) == "SEE ALSO" {
+			break
+		}
+
+		if inTable {
+			// 빈 줄이나 테이블 구분선은 건너뜁니다.
+			if strings.TrimSpace(line) == "" || strings.Contains(line, "──────") {
+				continue
+			}
+
+			// 정규표현식으로 시스템 콜 이름을 추출합니다.
+			matches := re.FindStringSubmatch(line)
+			if matches == nil || len(matches) < 2 {
+				continue
+			}
+
+			name := matches[1]
+			// 시스템 콜 이름 이후의 'Notes' 부분을 추출합니다.
+			notesIndex := re.FindStringIndex(line)[1]
+			notes := strings.ToLower(strings.TrimSpace(line[notesIndex:]))
+
+			// 'Notes'에 제외 키워드가 있는지 확인합니다.
+			isExcluded := false
+			if notes != "" {
+				for _, keyword := range excludeKeywords {
+					if strings.Contains(notes, keyword) {
+						isExcluded = true
+						break
+					}
+				}
+			}
+
+			if !isExcluded {
+				syscallSet[name] = struct{}{}
+			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("파일 스캔 중 오류 발생: %w", err)
+		return nil, fmt.Errorf("error while scanning man page output: %w", err)
+	}
+	
+	if len(syscallSet) == 0 {
+		// man 페이지에서 유효한 시스템 콜을 하나도 파싱하지 못한 경우 경고를 반환할 수 있습니다.
+		// 여기서는 빈 리스트와 nil 에러를 반환하여 호출자가 처리하도록 합니다.
+		fmt.Println("\n[WARNING] Could not parse any valid syscalls from man page.")
 	}
 
-	if len(foundSyscalls) == 0 {
-		return nil, fmt.Errorf("'%s' 접두사를 가진 시스템 콜 심볼을 찾을 수 없습니다", prefix)
+	// map의 키(시스템 콜 이름)를 슬라이스로 변환합니다.
+	syscalls := make([]string, 0, len(syscallSet))
+	for name := range syscallSet {
+		syscalls = append(syscalls, name)
 	}
-	fmt.Println("디버깅용출력 /kallsyms : ",foundSyscalls)
-	return foundSyscalls, nil
+
+	// 알파벳순으로 정렬합니다.
+	sort.Strings(syscalls)
+	
+	fmt.Printf("Successfully parsed %d filtered syscalls from man page.\n", len(syscalls))
+	return syscalls, nil
 }
+
 
 func getStaticSyscallList() []string {
 	return []string{
