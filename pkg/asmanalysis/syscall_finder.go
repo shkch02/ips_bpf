@@ -6,14 +6,13 @@ import (
 	"github.com/knightsc/gapstone"
 )
 
-
 // SyscallInfo는 발견된 시스템 콜의 정보를 담는 구조체입니다.
 type SyscallInfo struct {
 	Address uint64 // syscall 명령어의 주소
 	Number  int64  // 호출 시점의 rax 값 (시스템 콜 번호)
 }
 
-// FindSyscalls는 디스어셈블된 명령어 목록을 분석하여 시스템 콜 호출을 찾습니다.
+// FindSyscalls는 디스어셈블된 명령어 목록에서 call 0x시스템콜 주소 호출하는 명령어 찾아 해당 명령어의 실행시의 eax(또는 rax) 값을 추적하여 시스템 콜 번호를 반환
 func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 	var results []SyscallInfo
 	fmt.Println("FindSyscalls 디버깅용 출력")
