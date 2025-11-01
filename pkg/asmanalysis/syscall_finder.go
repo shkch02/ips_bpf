@@ -12,6 +12,9 @@ type SyscallInfo struct {
 	Number  int64  // 호출 시점의 rax 값 (시스템 콜 번호)
 }
 
+// *** 추출 불가, 추후 어셈블 분석시 활용위해 남겨둠, ***
+//FIXME : rax 추적 로직 개선 필요, 현재는 단순 mov 즉시값 대입과 xor eax, eax 패턴만 추적
+
 // FindSyscalls는 디스어셈블된 명령어 목록에서 call 0x시스템콜 주소 호출하는 명령어 찾아 해당 명령어의 실행시의 eax(또는 rax) 값을 추적하여 시스템 콜 번호를 반환
 func FindSyscalls(SyscallAddr uint64, instructions []gapstone.Instruction) ([]SyscallInfo, error) {
 	var results []SyscallInfo
