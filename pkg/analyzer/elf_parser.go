@@ -35,9 +35,9 @@ func (a *ELFAnalyzer) ExtractSharedLibs() ([]string, error) {
 	return a.elfFile.ImportedLibraries()
 }
 
-// ExtractDynamicSymbols : 동적 심볼 추출
+// ExtractDynamicSymbols : 해당 elf가 참조하는 동적 심볼 추출하여 문자열string으로 반환
 func (a *ELFAnalyzer) ExtractDynamicSymbols() ([]string, error) {
-	dynamicSymbols, err := a.elfFile.DynamicSymbols()
+	dynamicSymbols, err := a.elfFile.DynamicSymbols() //elf.File의 DynamicSymbols 메서드 호출
 	if err != nil {
 		return nil, fmt.Errorf("동적 심볼 추출 실패: %w", err)
 	}
@@ -64,10 +64,11 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 }
 
 func (a *ELFAnalyzer) FindSyscallSymbolAddr() (uint64, error) {
+	// 동적 심볼 목록 추출
 	symbolNames, err := a.ExtractDynamicSymbols()
 
 	var syscallsymbolindex uint32
-	// 2. "syscall"와 이름이 일치하는 심볼을 찾고, 해당 심볼의 인덱스를 반환
+	// "syscall"와 이름이 일치하는 심볼을 찾고, 해당 심볼의 인덱스를 반환
 	for i, sym := range symbolNames {
 		if sym == "syscall" {
 			// elf.File.DynamicSymbols()는 Index 1부터 시작하는 배열을 반환
