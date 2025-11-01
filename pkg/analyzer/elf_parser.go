@@ -63,6 +63,7 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 	return symbolNames, nil
 }
 
+// FinndSysccallSymbolAddr : syscall 함수를 가리키는 포인터가 저장된 주소(GOT 엔트리 주소) 반환
 func (a *ELFAnalyzer) FindSyscallSymbolAddr() (uint64, error) {
 	// 동적 심볼 목록 추출
 	symbolNames, err := a.ExtractDynamicSymbols()
