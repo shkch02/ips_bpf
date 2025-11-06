@@ -7,9 +7,10 @@ package main
 
 import (
 	"debug/elf"
-	"encoding/json" 
+	"encoding/json"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
+
 	//"ips_bpf/static-analyzer/pkg/asmanalysis"
 	"log"
 	"os"
@@ -33,6 +34,7 @@ func main() {
 	}
 	defer analyzer.Close()
 
+	//단순 라이브러리 목록 추출은 정확한 시스템콜 추출할 수 없기에 폐기, 활용성을 위해 코드에는 남기겠음
 	/*libs, err := analyzer.ExtractSharedLibs()
 	if err != nil {
 		// FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
@@ -63,7 +65,7 @@ func main() {
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
 	} else {
-		fmt.Println("바이너리가 의존하는 동적 심볼 목록:") 
+		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
 		for _, sym := range symbols {
 			fmt.Printf("- %s\n", sym)
 		}
@@ -71,9 +73,9 @@ func main() {
 
 	fmt.Println("----------------------------------------")
 
-	//받은 심볼 슬라이스와 시스템콜 비교해서 시스템콜인 목록만 남기기,  안에서 set해시 활용 
+	//받은 심볼 슬라이스와 시스템콜 비교해서 시스템콜인 목록만 남기기,  안에서 set해시 활용
 	expectSyscalls := analyzer.FilterSyscalls(symbols)
-	
+
 	if len(expectSyscalls) > 0 {
 		fmt.Println("추출된 시스템 콜 목록:")
 		for _, sym := range expectSyscalls {
@@ -82,7 +84,6 @@ func main() {
 	} else {
 		fmt.Println("의존하는 시스템 콜을 찾지 못했습니다.")
 	}
-
 
 	//json으로 변환
 	fmt.Println("JSON 출력:")
@@ -94,14 +95,6 @@ func main() {
 
 	// []byte 타입의 jsonData를 string으로 변환하여 출력
 	fmt.Println(string(jsonData))
-
-
-
-
-
-
-
-
 
 	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현
 	/*symbols, err := analyzer.ExtractSymbols()

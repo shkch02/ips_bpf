@@ -15,6 +15,19 @@ import (
 var syscallSet = make(map[string]struct{})
 
 func init() {
+	//https://patorjk.com/software/taag/#p=display&f=Big&t=ESA&x=none&v=4&h=4&w=80&we=false
+	//Big 글꼴 사용
+	fmt.Println()
+	fmt.Println("=========================================")
+	fmt.Println(`|  ____|/ ____|  /\`)
+	fmt.Println(`| |__  | (___   /  \`)
+	fmt.Println(`|  __|  \___ \ / /\ \`)
+	fmt.Println(`| |____ ____) / ____ \ `)
+	fmt.Println(`|______|_____/_/    \_\`)
+	fmt.Println("=========================================")
+	fmt.Println(" [ ELF Static Analyzer (ESA) Booting... ]")
+	fmt.Println()
+
 	//proc/kallsyms에서 동적으로 시스템 콜 목록추출
 	syscalls, err := parseMan()
 	if err != nil {
@@ -31,7 +44,7 @@ func init() {
 
 func parseMan() ([]string, error) {
 	fmt.Println("Parsing 'man 2 syscalls' to get the list of syscalls...")
-	
+
 	// 'man' 명령어의 출력이 시스템 언어 설정에 영향을 받지 않도록 로케일을 'C' (영어)로 설정
 	cmd := exec.Command("man", "2", "syscalls")
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
@@ -106,17 +119,17 @@ func parseMan() ([]string, error) {
 				syscallSet[name] = struct{}{}
 			}
 
-			 // 최적화: SEE ALSO까지 넘어가면서 쓸데없는 코드들이 자꾸 들어감, 그냥 xtensa까지만 하고 종료
-            if name == "xtensa" {
-                break
-            }
+			// 최적화: SEE ALSO까지 넘어가면서 쓸데없는 코드들이 자꾸 들어감, 그냥 xtensa까지만 하고 종료
+			if name == "xtensa" {
+				break
+			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error while scanning man page output: %w", err)
 	}
-	
+
 	if len(syscallSet) == 0 {
 		// man 페이지 파싱실패, 아래 getStatocSyscallList()목록 사용하게됨
 		fmt.Println("\n[WARNING] Could not parse any valid syscalls from man page.")
@@ -130,11 +143,10 @@ func parseMan() ([]string, error) {
 
 	// 알파벳순 정렬
 	sort.Strings(syscalls)
-	
+
 	fmt.Printf("Successfully parsed %d filtered syscalls from man page.\n", len(syscalls))
 	return syscalls, nil
 }
-
 
 func getStaticSyscallList() []string {
 	return []string{
@@ -155,7 +167,7 @@ func getStaticSyscallList() []string {
 	}
 }
 
-//FilterSyscalls는 추출된 다이나믹 심볼중 시스템콜만 추출하여 반환
+// FilterSyscalls는 추출된 다이나믹 심볼 목록을 입력받아 시스템콜 호출 심볼을  필터링하여 시스템콜 목록 Successfully parsed반환
 func (a *ELFAnalyzer) FilterSyscalls(symbols []string) []string {
 	// 결과를 담을 슬라이스
 	foundSyscalls := make([]string, 0)

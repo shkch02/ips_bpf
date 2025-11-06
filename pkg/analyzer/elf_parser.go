@@ -30,7 +30,7 @@ func (a *ELFAnalyzer) Close() {
 	a.elfFile.Close()
 }
 
-// ExtractSharedLibs :  의존하는 공유 라이브러리 목록을 추출
+// ExtractSharedLibs :  의존하는 공유 라이브러리 목록을 추출, 단순 라이브러리 목록 추출은 정확한 시스템콜 추출할 수 없기에 폐기
 func (a *ELFAnalyzer) ExtractSharedLibs() ([]string, error) {
 	return a.elfFile.ImportedLibraries()
 }
@@ -63,6 +63,8 @@ func (a *ELFAnalyzer) ExtractSymbols() ([]string, error) {
 	return symbolNames, nil
 }
 
+
+// GOT : 심볼된 주소를 가상주소로 매핑하는 테이블
 // FinndSysccallSymbolAddr : syscall 함수를 가리키는 포인터가 저장된 주소(GOT 엔트리 주소) 반환
 func (a *ELFAnalyzer) FindSyscallSymbolAddr() (uint64, error) {
 	// 동적 심볼 목록 추출
@@ -130,7 +132,7 @@ func (a *ELFAnalyzer) Section(name string) *elf.Section {
 	return a.elfFile.Section(name)
 }
 
-// ExtractAsmCode : .text 섹션의 어셈블리 코드와 시작 주소 추출
+// ExtractAsmCode : .text 섹션의 기계어를 어셈블리 코드로 바꾸고 시작 주소 추출
 func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
 	textSect := a.Section(".text")
 	if textSect == nil {
