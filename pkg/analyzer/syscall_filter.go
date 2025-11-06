@@ -18,13 +18,13 @@ func init() {
 	//https://patorjk.com/software/taag/#p=display&f=Big&t=ESA&x=none&v=4&h=4&w=80&we=false
 	//Big 글꼴 사용
 	fmt.Println()
-	fmt.Println("=========================================")
+	fmt.Println(` ______  _____         `)
 	fmt.Println(`|  ____|/ ____|  /\`)
 	fmt.Println(`| |__  | (___   /  \`)
 	fmt.Println(`|  __|  \___ \ / /\ \`)
 	fmt.Println(`| |____ ____) / ____ \ `)
 	fmt.Println(`|______|_____/_/    \_\`)
-	fmt.Println("=========================================")
+	fmt.Println()
 	fmt.Println(" [ ELF Static Analyzer (ESA) Booting... ]")
 	fmt.Println()
 
