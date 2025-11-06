@@ -15,17 +15,19 @@ import (
 var syscallSet = make(map[string]struct{})
 
 func init() {
-	//https://patorjk.com/software/taag/#p=display&f=Big&t=ESA&x=none&v=4&h=4&w=80&we=false
+	//https://patorjk.com/software/taag/
 	//Big 글꼴 사용
 	fmt.Println()
-	fmt.Println(` ______  _____         `)
-	fmt.Println(`|  ____|/ ____|  /\`)
-	fmt.Println(`| |__  | (___   /  \`)
-	fmt.Println(`|  __|  \___ \ / /\ \`)
-	fmt.Println(`| |____ ____) / ____ \ `)
-	fmt.Println(`|______|_____/_/    \_\`)
+	fmt.Println(`  ______ _      ______    _____ _        _   _                             _                    `)
+	fmt.Println(` |  ____| |    |  ____|  / ____| |      | | (_)          /\               | |                   `)
+	fmt.Println(` | |__  | |    | |__    | (___ | |_ __ _| |_ _  ___     /  \   _ __   __ _| |_   _ _______ _ __ `)
+	fmt.Println(` |  __| | |    |  __|    \___ \| __/ _' | __| |/ __|   / /\ \ | '_ \ / _' | | | | |_  / _ \ '__|`)
+	fmt.Println(` | |____| |____| |       ____) | || (_| | |_| | (__   / ____ \| | | | (_| | | |_| |/ /  __/ |   `)
+	fmt.Println(` |______|______|_|      |_____/ \__\__,_|\__|_|\___| /_/    \_\_| |_|\__,_|_|\__, /___\___|_|   `)
+	fmt.Println(`                                                                            __/ |               `)
+	fmt.Println(`                                                                           |___/                `)
 	fmt.Println()
-	fmt.Println(" [ ELF Static Analyzer (ESA) Booting... ]")
+	fmt.Println(" [ ELF Static Analyzer Booting... ]")
 	fmt.Println()
 
 	//proc/kallsyms에서 동적으로 시스템 콜 목록추출
