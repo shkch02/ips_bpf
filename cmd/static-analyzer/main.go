@@ -125,7 +125,7 @@ func main() {
 		// 4. [신규] "64" 접미사로 재시도
 		//    (단, wrapperName이 이미 "64"로 끝나지 않는 경우에만)
 		if !strings.HasSuffix(wrapperName, "64") {
-			newName := wrapperName + "64"
+			newName := "__" + wrapperName + "64"
 			log.Printf("  [시도] '%s'로 재시도...\n", newName)
 
 			// "fstat64"와 같은 새 이름으로 다시 함수 호출
