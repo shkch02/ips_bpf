@@ -1,5 +1,3 @@
-// go run ./cmd/static-analyzer/main.go ../syscalltest2
-// go run cmd/static-analyzer/main.go /usr/sbin/nginx
 // cmd/static-analyzer/main.go
 package main
 
@@ -8,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
-	"ips_bpf/static-analyzer/pkg/asmanalysis" // asmanalysis 임포트
 	"log"
 	"os"
 	"strings"
@@ -67,8 +64,7 @@ func main() {
 	fmt.Println("----------------------------------------")
 
 	// --- 4. syscall_filter.go를 사용해 "관심 있는" 래퍼 함수 필터링 ---
-	// (이 단계는 man 페이지 파싱을 그대로 활용하여 어떤 심볼을 추적할지 결정합니다)
-	expectSyscalls := analyzer.FilterSyscalls(symbols) // V1의 JSON 출력 대상
+	expectSyscalls := analyzer.FilterSyscalls(symbols)
 
 	if len(expectSyscalls) == 0 {
 		fmt.Println("의존하는 시스템 콜 래퍼를 찾지 못했습니다.")
@@ -84,8 +80,8 @@ func main() {
 	// --- 5. [신규] Libc 역어셈블을 통해 커널 시스템 콜 번호 매핑 ---
 	fmt.Println("래퍼 함수 $\to$ 커널 시스템 콜 패턴 매핑 중...")
 
-	// 최종 결과 맵: map[래퍼 이름] $\to$ []SyscallInfo
-	kernelSyscallMap := make(map[string][]asmanalysis.SyscallInfo)
+	// 최종 결과 맵: map[래퍼 이름] $\to$ 커널 Syscall 이름
+	redisMap := make(map[string]string) // Redis K-V 포맷용 맵
 
 	// 중복 제거 (예: read@...가 여러 개 있을 수 있음)
 	uniqueWrappers := make(map[string]struct{})
@@ -105,56 +101,68 @@ func main() {
 		if err != nil {
 			// 1. 심볼 자체를 찾는 데 실패한 경우 (예: "fstat"이 아예 없음)
 			log.Printf("  [경고] '%s' 래퍼 추적 실패: %v\n", wrapperName, err)
-			kernelSyscallMap[wrapperName] = nil // nil 또는 빈 슬라이스
-			continue                            // 다음 래퍼로
-		}
-
-		if len(syscallPatterns) > 0 {
-			// 2. 첫 번째 시도(예: "fstat")에서 'syscall'을 바로 찾은 경우 (성공)
-			fmt.Printf("  [성공] '%s' 래퍼에서 %d개의 'syscall' 패턴 발견:\n", wrapperName, len(syscallPatterns))
-			for _, pattern := range syscallPatterns {
-				fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
-			}
-			kernelSyscallMap[wrapperName] = syscallPatterns
 			continue // 다음 래퍼로
 		}
 
-		// 3. 첫 번째 시도가 실패한 경우 (len == 0, JMP 추적 필요)
-		log.Printf("  [정보] '%s' 래퍼에서 'syscall' 명령어를 찾지 못함 (JMP 추적 필요할 수 있음)\n", wrapperName)
+		// 2. 래퍼에서 유효한 커널 시스템 콜 이름 찾기
+		foundKernelName := ""
+		if len(syscallPatterns) > 0 {
+			fmt.Printf("  [성공] '%s' 래퍼에서 %d개의 'syscall' 패턴 발견:\n", wrapperName, len(syscallPatterns))
 
-		// 4. [신규] "64" 접미사로 재시도
-		//    (단, wrapperName이 이미 "64"로 끝나지 않는 경우에만)
-		if !strings.HasSuffix(wrapperName, "64") {
-			newName := "__" + wrapperName + "64"
-			log.Printf("  [시도] '%s'로 재시도...\n", newName)
-
-			// "fstat64"와 같은 새 이름으로 다시 함수 호출
-			syscallPatterns, err = libcAnalyzer.FindKernelSyscallPatterns(newName)
-
-			if err == nil && len(syscallPatterns) > 0 {
-				// 5. 재시도 성공
-				fmt.Printf("  [성공] '%s' (%s) 래퍼에서 %d개의 'syscall' 패턴 발견:\n", newName, wrapperName, len(syscallPatterns))
-				for _, pattern := range syscallPatterns {
-					fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
+			for _, pattern := range syscallPatterns {
+				fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
+				// 첫 번째로 유효한(-1이 아닌) 시스템 콜 번호를 찾으면 이름으로 변환
+				if foundKernelName == "" && pattern.Number != -1 {
+					if name, ok := analyzer.GetKernelSyscallName(pattern.Number); ok {
+						foundKernelName = name
+					}
 				}
-				// 결과는 "fstat" (원본 래퍼 이름) 키에 저장합니다.
-				kernelSyscallMap[wrapperName] = syscallPatterns
-				continue // 다음 래퍼로
-			} else {
-				// 6. 재시도 실패
-				log.Printf("  [실패] '%s' 재시도 실패 (오류: %v, 패턴: %d개)\n", newName, err, len(syscallPatterns))
 			}
 		}
 
-		// 7. 최종 실패 (재시도를 안 했거나, 재시도도 실패한 경우)
-		kernelSyscallMap[wrapperName] = []asmanalysis.SyscallInfo{}
+		// 3. 첫 번째 시도 실패 및 "64" 접미사로 재시도
+		if foundKernelName == "" {
+			if len(syscallPatterns) == 0 {
+				log.Printf("  [정보] '%s' 래퍼에서 'syscall' 명령어를 찾지 못함 (JMP 추적 필요할 수 있음)\n", wrapperName)
+			} else {
+				log.Printf("  [정보] '%s' 래퍼에서 유효한 커널 시스템 콜 번호를 찾지 못함 (모두 -1 이었음)\n", wrapperName)
+			}
+
+			// "64" 접미사 재시도 로직
+			if !strings.HasSuffix(wrapperName, "64") {
+				newName := wrapperName + "64"
+				log.Printf("  [시도] '%s'로 재시도...\n", newName)
+
+				syscallPatterns, err = libcAnalyzer.FindKernelSyscallPatterns(newName)
+
+				if err == nil && len(syscallPatterns) > 0 {
+					fmt.Printf("  [성공] '%s' (%s) 래퍼에서 %d개의 'syscall' 패턴 발견:\n", newName, wrapperName, len(syscallPatterns))
+					for _, pattern := range syscallPatterns {
+						fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
+						if foundKernelName == "" && pattern.Number != -1 {
+							if name, ok := analyzer.GetKernelSyscallName(pattern.Number); ok {
+								foundKernelName = name
+							}
+						}
+					}
+				} else {
+					log.Printf("  [실패] '%s' 재시도 실패 (오류: %v, 패턴: %d개)\n", newName, err, len(syscallPatterns))
+				}
+			}
+		}
+
+		// 4. 최종 맵에 저장
+		if foundKernelName != "" {
+			redisMap[wrapperName] = foundKernelName
+			log.Printf("  [매핑] %s $\to$ %s\n", wrapperName, foundKernelName)
+		}
 	}
 
 	// --- 6. 최종 JSON 출력 ---
 	fmt.Println("----------------------------------------")
-	fmt.Println("최종 매핑 결과 JSON 출력:")
+	fmt.Println("최종 매핑 결과 JSON (Redis K-V) 출력:")
 	// json.MarshalIndent를 사용하여 사람이 보기 좋게 포맷팅된 JSON 생성
-	jsonData, err := json.MarshalIndent(kernelSyscallMap, "", "  ") // V2의 kernelSyscallMap을 출력
+	jsonData, err := json.MarshalIndent(redisMap, "", "  ") // V2의 redisMap을 출력
 	if err != nil {
 		log.Fatalf("JSON 변환 오류: %v", err)
 	}
