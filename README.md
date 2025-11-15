@@ -67,6 +67,7 @@ go run ./cmd/static-analyzer/main.go <분석할_ELF_파일_경로>
 
 ###
 래퍼함수 목록 추출 : 현재 man 2 syscalls 파싱하여 얻은 목록을 sys(#)와 tracepoint참고하여 생성래퍼함수 목록 만들도록 리팩토링할 예정 
+syscall_filter.go의 syscallSet 생성 부분 고치면됨
 
 ### 기본 매핑으로 넘어갈 부분들 
 JMP 추적: open -> jmp <__open>과 같이 함수 시작 부분의 간접 점프를 따라가도록 elf_parser.go 개선.
@@ -74,5 +75,7 @@ JMP 추적: open -> jmp <__open>과 같이 함수 시작 부분의 간접 점프
 복잡한 제어 흐름: if/else 분기에 따라 syscall 번호가 달라지는 복잡한 래퍼 함수 분석 지원.
 
 정적 링크된 바이너리: libc가 아닌 바이너리 내부에 syscall 명령어가 직접 포함된 경우(vDSO 사용 등) 분석 지원.
+
+### JSON에 쓸데없는값 뺴고 키밸류 형태로  redis연동 준비
 ## 7. 라이센스
 
