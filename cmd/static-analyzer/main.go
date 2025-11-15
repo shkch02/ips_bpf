@@ -10,10 +10,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
-
-	//"ips_bpf/static-analyzer/pkg/asmanalysis"
+	"ips_bpf/static-analyzer/pkg/asmanalysis"
 	"log"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -83,6 +83,43 @@ func main() {
 		}
 	} else {
 		fmt.Println("의존하는 시스템 콜을 찾지 못했습니다.")
+	}
+
+	fmt.Println("래퍼 함수 $\to$ 커널 시스템 콜 패턴 매핑 중...")
+
+	// 최종 결과 맵: map[래퍼 이름] $\to$ []SyscallInfo
+	kernelSyscallMap := make(map[string][]asmanalysis.SyscallInfo)
+
+	// ... (uniqueWrappers 생성 로직 동일) ...
+	uniqueWrappers := make(map[string]struct{})
+	for _, sym := range wrapperSymbols {
+		parts := strings.Split(sym, "@")
+		uniqueWrappers[parts[0]] = struct{}{}
+	}
+
+	for wrapperName := range uniqueWrappers {
+		if wrapperName == "" {
+			continue
+		}
+
+		// FindKernelSyscallPatterns (복수형) 호출
+		syscallPatterns, err := libcAnalyzer.FindKernelSyscallPatterns(wrapperName)
+		if err != nil {
+			log.Printf("  [경고] '%s' 래퍼 추적 실패: %v\n", wrapperName, err)
+			kernelSyscallMap[wrapperName] = nil // nil 또는 빈 슬라이스
+		} else {
+			if len(syscallPatterns) == 0 {
+				log.Printf("  [정보] '%s' 래퍼에서 'syscall' 명령어를 찾지 못함 (JMP 추적 필요할 수 있음)\n", wrapperName)
+				kernelSyscallMap[wrapperName] = []asmanalysis.SyscallInfo{}
+				continue
+			}
+
+			fmt.Printf("  [성공] '%s' 래퍼에서 %d개의 'syscall' 패턴 발견:\n", wrapperName, len(syscallPatterns))
+			for _, pattern := range syscallPatterns {
+				fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
+			}
+			kernelSyscallMap[wrapperName] = syscallPatterns
+		}
 	}
 
 	//json으로 변환
