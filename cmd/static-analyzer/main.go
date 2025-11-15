@@ -101,22 +101,53 @@ func main() {
 
 		// FindKernelSyscallPatterns (복수형) 호출
 		syscallPatterns, err := libcAnalyzer.FindKernelSyscallPatterns(wrapperName)
+
 		if err != nil {
+			// 1. 심볼 자체를 찾는 데 실패한 경우 (예: "fstat"이 아예 없음)
 			log.Printf("  [경고] '%s' 래퍼 추적 실패: %v\n", wrapperName, err)
 			kernelSyscallMap[wrapperName] = nil // nil 또는 빈 슬라이스
-		} else {
-			if len(syscallPatterns) == 0 {
-				log.Printf("  [정보] '%s' 래퍼에서 'syscall' 명령어를 찾지 못함 (JMP 추적 필요할 수 있음)\n", wrapperName)
-				kernelSyscallMap[wrapperName] = []asmanalysis.SyscallInfo{}
-				continue
-			}
+			continue                            // 다음 래퍼로
+		}
 
+		if len(syscallPatterns) > 0 {
+			// 2. 첫 번째 시도(예: "fstat")에서 'syscall'을 바로 찾은 경우 (성공)
 			fmt.Printf("  [성공] '%s' 래퍼에서 %d개의 'syscall' 패턴 발견:\n", wrapperName, len(syscallPatterns))
 			for _, pattern := range syscallPatterns {
 				fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
 			}
 			kernelSyscallMap[wrapperName] = syscallPatterns
+			continue // 다음 래퍼로
 		}
+
+		// 3. 첫 번째 시도가 실패한 경우 (len == 0, JMP 추적 필요)
+		log.Printf("  [정보] '%s' 래퍼에서 'syscall' 명령어를 찾지 못함 (JMP 추적 필요할 수 있음)\n", wrapperName)
+
+		// 4. [신규] "64" 접미사로 재시도
+		//    (단, wrapperName이 이미 "64"로 끝나지 않는 경우에만)
+		if !strings.HasSuffix(wrapperName, "64") {
+			newName := wrapperName + "64"
+			log.Printf("  [시도] '%s'로 재시도...\n", newName)
+
+			// "fstat64"와 같은 새 이름으로 다시 함수 호출
+			syscallPatterns, err = libcAnalyzer.FindKernelSyscallPatterns(newName)
+
+			if err == nil && len(syscallPatterns) > 0 {
+				// 5. 재시도 성공
+				fmt.Printf("  [성공] '%s' (%s) 래퍼에서 %d개의 'syscall' 패턴 발견:\n", newName, wrapperName, len(syscallPatterns))
+				for _, pattern := range syscallPatterns {
+					fmt.Printf("    - 주소: 0x%x $\to$ 커널 Syscall #%d (0x%x)\n", pattern.Address, pattern.Number, pattern.Number)
+				}
+				// 결과는 "fstat" (원본 래퍼 이름) 키에 저장합니다.
+				kernelSyscallMap[wrapperName] = syscallPatterns
+				continue // 다음 래퍼로
+			} else {
+				// 6. 재시도 실패
+				log.Printf("  [실패] '%s' 재시도 실패 (오류: %v, 패턴: %d개)\n", newName, err, len(syscallPatterns))
+			}
+		}
+
+		// 7. 최종 실패 (재시도를 안 했거나, 재시도도 실패한 경우)
+		kernelSyscallMap[wrapperName] = []asmanalysis.SyscallInfo{}
 	}
 
 	// --- 6. 최종 JSON 출력 ---
