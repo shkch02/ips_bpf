@@ -176,7 +176,7 @@ func (a *ELFAnalyzer) ExtractAsmCode() ([]gapstone.Instruction, uint64, error) {
 }
 
 // FindKernelSyscallPatterns는 libc.so.6와 같은 라이브러리 파일 내에서
-// 특정 심볼 이름(예: "open")을 찾아, 해당 함수가 호출하는
+// 특정 심볼 이름(예: "open")을 인자로 받아, 해당 함수가 호출하는
 // 모든 커널 시스템 콜 패턴을 반환합니다.
 func (a *ELFAnalyzer) FindKernelSyscallPatterns(symbolName string) ([]asmanalysis.SyscallInfo, error) {
 	// 1. libc.so.6의 동적 심볼 테이블에서 symbolName을 찾습니다.
@@ -185,6 +185,7 @@ func (a *ELFAnalyzer) FindKernelSyscallPatterns(symbolName string) ([]asmanalysi
 		return nil, fmt.Errorf("동적 심볼 읽기 실패: %w", err)
 	}
 
+	// libsoc.6 내에서 symbolName과 일치하는 심볼을 찾음
 	var targetSymbol *elf.Symbol
 	for i, sym := range symbols {
 		if sym.Name == symbolName {

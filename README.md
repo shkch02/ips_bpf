@@ -24,7 +24,12 @@
 * **GoLang** : Go 1.24.3 이상 (go.mod 기준)
 * **운영체제** : Linux
 * **man** : man명령어 및 manpages-dev 실행가능(불가하다면 정적으로 목록 작성 가능)
-* **Go 의존성** : github.com/knightsc/gapstone GoLang의 디스어셈블러
+* **Go 의존성** : 
+
+github.com/knightsc/gapstone GoLang의 디스어셈블러
+
+
+github.com/redis/go-redis/v9
 
 ## 4. 사용 방법
 #### 1. (선택) 바이너리 빌드
