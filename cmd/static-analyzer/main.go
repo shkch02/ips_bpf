@@ -1,16 +1,17 @@
 // cmd/static-analyzer/main.go
-// # Nginx 바이너리를 분석하는 예시
-// go run cmd/static-analyzer/main.go /usr/sbin/nginx
 package main
 
 import (
+	"context"
 	"debug/elf"
 	"encoding/json"
 	"fmt"
-	"ips_bpf/static-analyzer/pkg/analyzer"
+	"ips_bpf/static-analyzer/pkg/analyzer" // asmanalysis 임포트
 	"log"
 	"os"
 	"strings"
+
+	"github.com/redis/go-redis/v9" // Redis 클라이언트 임포트
 )
 
 // !!! 중요: libc.so.6의 실제 경로는 시스템마다 다를 수 있습니다.
@@ -24,6 +25,25 @@ func main() {
 		fmt.Println("사용법: go run cmd/static-analyzer/main.go <ELF 파일 경로>")
 		os.Exit(1)
 	}
+
+	// [신규] Redis 클라이언트 초기화
+	// 환경 변수 REDIS_ADDR에서 주소를 읽어옵니다.
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379" // 환경 변수가 없으면 localhost를 기본값으로 사용
+		log.Printf("[정보] REDIS_ADDR 환경 변수가 설정되지 않았습니다. 기본값(localhost:6379)으로 연결 시도...")
+	}
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
+
+	// Redis 연결 테스트
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Fatalf("Redis 연결 실패 (%s): %v\n", redisAddr, err)
+	}
+	fmt.Printf("Redis 연결 성공: %s\n", redisAddr)
 
 	// 첫 번째 인자를 파일 경로로 사용
 	filePath := os.Args[1]
@@ -153,18 +173,45 @@ func main() {
 			}
 		}
 
-		// 4. 최종 맵에 저장
+		// 4. [수정] 최종 맵에 저장 (Tracepoint 필터링 포함)
 		if foundKernelName != "" {
-			redisMap[wrapperName] = foundKernelName
-			log.Printf("  [매핑] %s $\to$ %s\n", wrapperName, foundKernelName)
+			// [신규] 커널 시스템 콜 이름으로 Tracepoint 존재 여부 확인
+			if analyzer.IsTracepointAvailable(foundKernelName) {
+				redisMap[wrapperName] = foundKernelName
+				log.Printf("  [매핑] %s $\to$ %s (Tracepoint: ✓)\n", wrapperName, foundKernelName)
+			} else {
+				log.Printf("  [정보] %s $\to$ %s (Tracepoint: ✗ - 필터링됨)\n", wrapperName, foundKernelName)
+			}
 		}
 	}
 
-	// --- 6. 최종 JSON 출력 ---
+	// --- 6. [신규] Redis에 K-V 데이터 삽입 ---
+	fmt.Println("----------------------------------------")
+	fmt.Println("Redis에 래퍼 $\to$ 커널 매핑 저장 중...")
+
+	// 파이프라인 생성 (여러 SET 명령을 효율적으로 전송)
+	pipe := rdb.Pipeline()
+
+	// redisMap (map[string]string)을 순회하며 파이프라인에 추가
+	for wrapperName, kernelName := range redisMap {
+		if kernelName != "" { // 유효한 매핑만 저장
+			pipe.Set(ctx, wrapperName, kernelName, 0) // (key, value, expiration)
+		}
+	}
+
+	// 파이프라인 실행
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		log.Printf("[경고] Redis 파이프라인 실행 실패: %v\n", err)
+	} else {
+		log.Println("  [성공] Redis에 데이터 저장 완료.")
+	}
+
+	// --- 7. 최종 JSON 출력 (Redis K-V와 동일한 맵) ---
 	fmt.Println("----------------------------------------")
 	fmt.Println("최종 매핑 결과 JSON (Redis K-V) 출력:")
 	// json.MarshalIndent를 사용하여 사람이 보기 좋게 포맷팅된 JSON 생성
-	jsonData, err := json.MarshalIndent(redisMap, "", "  ") // V2의 redisMap을 출력
+	jsonData, err := json.MarshalIndent(redisMap, "", "  ") // redisMap을 출력
 	if err != nil {
 		log.Fatalf("JSON 변환 오류: %v", err)
 	}
