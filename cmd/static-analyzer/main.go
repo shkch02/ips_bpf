@@ -1,8 +1,4 @@
 // cmd/static-analyzer/main.go
-//# Nginx 바이너리를 분석하는 예시
-//go run cmd/static-analyzer/main.go /usr/sbin/nginx
-//elf파일에서 공유 라이브러리 목록과 심볼 목록을 추출하는 간단한 static analyzer 프로그램
-
 package main
 
 import (
@@ -10,11 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
-	"ips_bpf/static-analyzer/pkg/asmanalysis"
+	"ips_bpf/static-analyzer/pkg/asmanalysis" // asmanalysis 임포트
 	"log"
 	"os"
 	"strings"
 )
+
+// !!! 중요: libc.so.6의 실제 경로는 시스템마다 다를 수 있습니다.
+// (예: /lib/x86_64-linux-gnu/libc.so.6 또는 /lib64/libc.so.6)
+// 동적으로 찾거나, 상수로 지정해야 합니다.
+const LibcPath = "/lib/x86_64-linux-gnu/libc.so.6"
 
 func main() {
 	// 프로그램 인자 존재하는지 확인 (프로그램 이름 + 파일 경로)하고 없으면 사용법 출력
@@ -28,34 +29,23 @@ func main() {
 	fmt.Printf("분석 대상 파일: %s\n", filePath)
 	fmt.Println("----------------------------------------")
 
-	analyzer, err := analyzer.New(filePath)
+	// --- 1. 대상 ELF 분석기 초기화 ---
+	elfAnalyzer, err := analyzer.New(filePath)
 	if err != nil {
-		log.Fatalf("분석기 생성 오류: %v", err)
+		log.Fatalf("대상 ELF 분석기 생성 오류: %v", err)
 	}
-	defer analyzer.Close()
+	defer elfAnalyzer.Close()
 
-	//단순 라이브러리 목록 추출은 정확한 시스템콜 추출할 수 없기에 폐기, 활용성을 위해 코드에는 남기겠음
-	/*libs, err := analyzer.ExtractSharedLibs()
+	// --- 2. Libc 분석기 초기화 ---
+	fmt.Printf("Glibc 라이브러리 분석 중: %s\n", LibcPath)
+	libcAnalyzer, err := analyzer.New(LibcPath)
 	if err != nil {
-		// FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
-		if _, ok := err.(*elf.FormatError); !ok {
-			log.Printf("공유 라이브러리 분석 중 예상치 못한 오류 발생: %v", err)
-		}
+		log.Fatalf("Libc 분석기 생성 오류: %v", err)
 	}
+	defer libcAnalyzer.Close()
 
-	// 결과 출력
-	if len(libs) == 0 {
-		fmt.Println("이 파일은 동적 공유 라이브러리에 의존하지 않습니다.")
-	} else {
-		fmt.Println("발견된 공유 라이브러리 목록:")
-		for _, lib := range libs {
-			fmt.Printf("- %s\n", lib)
-		}
-	}*/
-
-	fmt.Println("----------------------------------------")
-
-	symbols, err := analyzer.ExtractDynamicSymbols() //이거 필터링하면됨
+	// --- 3. 대상 ELF에서 동적 심볼 추출 ---
+	symbols, err := elfAnalyzer.ExtractDynamicSymbols()
 	if err != nil {
 		if _, ok := err.(*elf.FormatError); !ok {
 			log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
@@ -64,6 +54,7 @@ func main() {
 
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
+		os.Exit(0) // 분석할 심볼이 없으므로 종료
 	} else {
 		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
 		for _, sym := range symbols {
@@ -73,26 +64,30 @@ func main() {
 
 	fmt.Println("----------------------------------------")
 
-	//받은 심볼 슬라이스와 시스템콜 비교해서 시스템콜인 목록만 남기기,  안에서 set해시 활용
-	expectSyscalls := analyzer.FilterSyscalls(symbols)
+	// --- 4. syscall_filter.go를 사용해 "관심 있는" 래퍼 함수 필터링 ---
+	// (이 단계는 man 페이지 파싱을 그대로 활용하여 어떤 심볼을 추적할지 결정합니다)
+	expectSyscalls := analyzer.FilterSyscalls(symbols) // V1의 JSON 출력 대상
 
-	if len(expectSyscalls) > 0 {
-		fmt.Println("추출된 시스템 콜 목록:")
-		for _, sym := range expectSyscalls {
-			fmt.Printf("- %s\n", sym)
-		}
-	} else {
-		fmt.Println("의존하는 시스템 콜을 찾지 못했습니다.")
+	if len(expectSyscalls) == 0 {
+		fmt.Println("의존하는 시스템 콜 래퍼를 찾지 못했습니다.")
+		os.Exit(0) // 분석할 래퍼가 없으므로 종료
 	}
 
+	fmt.Printf("의존하는 시스템 콜 래퍼 %d개 발견:\n", len(expectSyscalls))
+	for _, sym := range expectSyscalls {
+		fmt.Printf("- %s\n", sym)
+	}
+	fmt.Println("----------------------------------------")
+
+	// --- 5. [신규] Libc 역어셈블을 통해 커널 시스템 콜 번호 매핑 ---
 	fmt.Println("래퍼 함수 $\to$ 커널 시스템 콜 패턴 매핑 중...")
 
 	// 최종 결과 맵: map[래퍼 이름] $\to$ []SyscallInfo
 	kernelSyscallMap := make(map[string][]asmanalysis.SyscallInfo)
 
-	// ... (uniqueWrappers 생성 로직 동일) ...
+	// 중복 제거 (예: read@...가 여러 개 있을 수 있음)
 	uniqueWrappers := make(map[string]struct{})
-	for _, sym := range wrapperSymbols {
+	for _, sym := range expectSyscalls { // V1의 expectSyscalls를 사용
 		parts := strings.Split(sym, "@")
 		uniqueWrappers[parts[0]] = struct{}{}
 	}
@@ -122,57 +117,15 @@ func main() {
 		}
 	}
 
-	//json으로 변환
-	fmt.Println("JSON 출력:")
+	// --- 6. 최종 JSON 출력 ---
+	fmt.Println("----------------------------------------")
+	fmt.Println("최종 매핑 결과 JSON 출력:")
 	// json.MarshalIndent를 사용하여 사람이 보기 좋게 포맷팅된 JSON 생성
-	jsonData, err := json.MarshalIndent(expectSyscalls, "", "  ")
+	jsonData, err := json.MarshalIndent(kernelSyscallMap, "", "  ") // V2의 kernelSyscallMap을 출력
 	if err != nil {
 		log.Fatalf("JSON 변환 오류: %v", err)
 	}
 
 	// []byte 타입의 jsonData를 string으로 변환하여 출력
 	fmt.Println(string(jsonData))
-
-	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현
-	/*symbols, err := analyzer.ExtractSymbols()
-		if err != nil {
-		    if _, ok := err.(*elf.FormatError); !ok {
-	    	    log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
-	    	}
-		}
-
-
-		if len(symbols) == 0 {
-			fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
-		} else {
-			fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
-			for _, sym := range symbols {
-				fmt.Printf("- %s\n", sym)
-			}
-		}*/
-
-	/*insns, startAddr, err := analyzer.ExtractAsmCode()
-	if err != nil {
-		log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
-	}
-	fmt.Printf("시작주소 : 0x%x\n", startAddr)
-	for _, asm := range insns {
-		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
-	}*/
-
-	/*()
-	SyscallAddr, err := analyzer.FindSyscallSymbolAddr()
-	if err != nil {
-		log.Printf("syscall 심볼 주소 찾기 중 오류 발생: %v", err)
-	}
-
-	syscalls, err := asmanalysis.FindSyscalls(SyscallAddr, insns)
-	if err != nil {
-		log.Printf("systemcall 추출중 오류 발생: %v", err)
-	}
-
-	fmt.Println("발견된 시스템 콜 목록:")
-	for _, sc := range syscalls {
-		fmt.Printf("- 주소: 0x%x, 시스템 콜 번호: %d\n", sc.Address, sc.Number)
-	}*/
 }
