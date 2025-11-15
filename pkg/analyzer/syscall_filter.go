@@ -170,8 +170,8 @@ func getStaticSyscallList() []string {
 	}
 }
 
-// FilterSyscalls는 추출된 다이나믹 심볼 목록을 입력받아 시스템콜 호출 심볼을  필터링하여 시스템콜 목록 Successfully parsed반환
-func (a *ELFAnalyzer) FilterSyscalls(symbols []string) []string {
+// 수정 전: func (a *ELFAnalyzer) FilterSyscalls(symbols []string) []string {
+func FilterSyscalls(symbols []string) []string {
 	// 결과를 담을 슬라이스
 	foundSyscalls := make([]string, 0)
 
