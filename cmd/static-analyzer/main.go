@@ -1,4 +1,6 @@
 // cmd/static-analyzer/main.go
+// # Nginx 바이너리를 분석하는 예시
+// go run cmd/static-analyzer/main.go /usr/sbin/nginx
 package main
 
 import (
