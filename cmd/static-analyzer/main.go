@@ -1,3 +1,5 @@
+// go run ./cmd/static-analyzer/main.go ../syscalltest2
+// go run cmd/static-analyzer/main.go /usr/sbin/nginx
 // cmd/static-analyzer/main.go
 package main
 
