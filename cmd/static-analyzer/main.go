@@ -103,13 +103,27 @@ func main() {
 
 	// --- 6. [신규] Redis에 K-V 데이터 삽입 ---
 	fmt.Println("----------------------------------------")
-	fmt.Println("Redis에 래퍼 $\to$ 커널 매핑 저장 중...")
+	fmt.Println("Redis에 래퍼 $\to$ 커널 매핑 및 Set 저장 중...")
 	pipe := rdb.Pipeline()
+
+	// Set에 추가할 시스템 콜 목록을 별도로 수집
+	var callableSyscalls []interface{}
+
 	for wrapperName, kernelName := range redisMap {
 		if kernelName != "" {
+			// 1. 기존의 개별 K-V 데이터 저장 (Keep this for debugging/lookup)
 			pipe.Set(ctx, wrapperName, kernelName, 0)
+
+			// 2. [추가] Set에 커널 시스템 콜 이름만 추가 (웹 서비스에서 사용)
+			callableSyscalls = append(callableSyscalls, kernelName)
 		}
 	}
+
+	// [추가] Set에 모든 시스템 콜 이름을 한 번에 저장 (Set Key는 SyscallService에 정의된 값)
+	if len(callableSyscalls) > 0 {
+		pipe.SAdd(ctx, "cluster_callable_syscalls", callableSyscalls...) // SAdd 사용
+	}
+
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		log.Printf("[경고] Redis 파이프라인 실행 실패: %v\n", err)
