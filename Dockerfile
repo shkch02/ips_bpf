@@ -6,7 +6,7 @@ ARG TARGETARCH
 ENV GOLANG_VERSION=1.24.3
 ENV GOLANG_ARCH=${TARGETARCH:-amd64}
 ENV PATH="/usr/local/go/bin:${PATH}"
-ENV GOROOT= /usr/local/go
+ENV GOROOT=/usr/local/go
 
 # Go 1.24.3 수동 설치
 RUN apk add --no-cache curl \
