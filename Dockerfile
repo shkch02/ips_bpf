@@ -39,7 +39,7 @@ RUN CGO_ENABLED=1 \
 # --- 실행 단계 ---
 
 # [수정] 실행 환경도 Debian Slim으로 변경
-FROM debian:stable-slim
+FROMd debian:bookworm-slim
 
 # 런타임 의존성 설치
 # libcapstone4 및 man 실행에 필요한 패키지 설치
