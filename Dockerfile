@@ -3,10 +3,10 @@ FROM alpine:3.16 AS builder
 
 # BuildKit이 제공하는 아키텍처(amd64, arm64 등)에 맞춰 Go 설치
 ARG TARGETARCH
-ENV GOLANG_VERSION 1.24.3
+ENV GOLANG_VERSION=1.24.3
 ENV GOLANG_ARCH=${TARGETARCH:-amd64}
 ENV PATH="/usr/local/go/bin:${PATH}"
-ENV GOROOT=/usr/local/go
+ENV GOROOT= /usr/local/go
 
 # Go 1.24.3 수동 설치
 RUN apk add --no-cache curl \
