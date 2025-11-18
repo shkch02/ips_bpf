@@ -44,7 +44,7 @@ stage('Build & Push Job Image') {
     steps {
         // Harbor 인증
         withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-            sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p '${HARBOR_PASS}'"
+            sh "echo ${HARBOR_PASS} | docker login ${env.HARBOR_URL} -u ${HARBOR_USER} --password-stdin"
             
             // 문제 해결: 'script' 블록으로 변수 정의 및 사용을 감쌈
             script {
