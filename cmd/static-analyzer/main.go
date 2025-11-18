@@ -1,19 +1,19 @@
 // cmd/static-analyzer/main.go
-//# Nginx 바이너리를 분석하는 예시
-//go run cmd/static-analyzer/main.go /usr/sbin/nginx
-//elf파일에서 공유 라이브러리 목록과 심볼 목록을 추출하는 간단한 static analyzer 프로그램
-
 package main
 
 import (
+	"context"
 	"debug/elf"
 	"encoding/json"
 	"fmt"
 	"ips_bpf/static-analyzer/pkg/analyzer"
-
-	//"ips_bpf/static-analyzer/pkg/asmanalysis"
+	"ips_bpf/static-analyzer/pkg/config"    // [신규]
+	"ips_bpf/static-analyzer/pkg/processor" // [신규]
 	"log"
 	"os"
+	"strings"
+
+	"github.com/redis/go-redis/v9" // Redis 클라이언트 임포트
 )
 
 func main() {
@@ -23,119 +23,102 @@ func main() {
 		os.Exit(1)
 	}
 
+	// [이동] Redis 초기화 로직 (주석 처리됨)
+
+	// [수정] config.LoadRedisAddr() 호출
+	redisAddr := config.LoadRedisAddr()
+	rdb := redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Fatalf("Redis 연결 실패 (%s): %v\n", redisAddr, err)
+	}
+	fmt.Printf("Redis 연결 성공: %s\n", redisAddr)
+
 	// 첫 번째 인자를 파일 경로로 사용
 	filePath := os.Args[1]
 	fmt.Printf("분석 대상 파일: %s\n", filePath)
 	fmt.Println("----------------------------------------")
 
-	analyzer, err := analyzer.New(filePath)
+	// --- 1. 대상 ELF 분석기 초기화 ---
+	elfAnalyzer, err := analyzer.New(filePath)
 	if err != nil {
-		log.Fatalf("분석기 생성 오류: %v", err)
+		log.Fatalf("대상 ELF 분석기 생성 오류: %v", err)
 	}
-	defer analyzer.Close()
+	defer elfAnalyzer.Close()
 
-	//단순 라이브러리 목록 추출은 정확한 시스템콜 추출할 수 없기에 폐기, 활용성을 위해 코드에는 남기겠음
-	/*libs, err := analyzer.ExtractSharedLibs()
+	// --- 2. Libc 분석기 초기화 ---
+	// [수정] config.LibcPath 사용
+	fmt.Printf("Glibc 라이브러리 분석 중: %s\n", config.LibcPath)
+	libcAnalyzer, err := analyzer.New(config.LibcPath)
 	if err != nil {
-		// FormatError는 라이브러리가 없는 정상 케이스로 간주하고, 그 외의 에러만 로그 출력
-		if _, ok := err.(*elf.FormatError); !ok {
-			log.Printf("공유 라이브러리 분석 중 예상치 못한 오류 발생: %v", err)
-		}
+		log.Fatalf("Libc 분석기 생성 오류: %v", err)
 	}
+	defer libcAnalyzer.Close()
 
-	// 결과 출력
-	if len(libs) == 0 {
-		fmt.Println("이 파일은 동적 공유 라이브러리에 의존하지 않습니다.")
-	} else {
-		fmt.Println("발견된 공유 라이브러리 목록:")
-		for _, lib := range libs {
-			fmt.Printf("- %s\n", lib)
-		}
-	}*/
-
-	fmt.Println("----------------------------------------")
-
-	symbols, err := analyzer.ExtractDynamicSymbols() //이거 필터링하면됨
+	// --- 3. 대상 ELF에서 동적 심볼 추출 ---
+	symbols, err := elfAnalyzer.ExtractDynamicSymbols()
 	if err != nil {
 		if _, ok := err.(*elf.FormatError); !ok {
 			log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
 		}
 	}
-
 	if len(symbols) == 0 {
 		fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
-	} else {
-		fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
-		for _, sym := range symbols {
-			fmt.Printf("- %s\n", sym)
-		}
+		os.Exit(0) // 분석할 심볼이 없으므로 종료
 	}
+	// ... (심볼 목록 출력은 가독성을 위해 생략) ...
 
+	// --- 4. syscall_filter.go를 사용해 "관심 있는" 래퍼 함수 필터링 ---
+	expectSyscalls := analyzer.FilterSyscalls(symbols)
+	if len(expectSyscalls) == 0 {
+		fmt.Println("의존하는 시스템 콜 래퍼를 찾지 못했습니다.")
+		os.Exit(0) // 분석할 래퍼가 없으므로 종료
+	}
+	fmt.Printf("의존하는 시스템 콜 래퍼 %d개 발견:\n", len(expectSyscalls))
+	for _, sym := range expectSyscalls {
+		fmt.Printf("- %s\n", sym)
+	}
 	fmt.Println("----------------------------------------")
 
-	//받은 심볼 슬라이스와 시스템콜 비교해서 시스템콜인 목록만 남기기,  안에서 set해시 활용
-	expectSyscalls := analyzer.FilterSyscalls(symbols)
+	// --- 5. [신규] 핵심 로직을 Processor에 위임 ---
+	fmt.Println("래퍼 함수 $\to$ 커널 시스템 콜 패턴 매핑 중...")
 
-	if len(expectSyscalls) > 0 {
-		fmt.Println("추출된 시스템 콜 목록:")
-		for _, sym := range expectSyscalls {
-			fmt.Printf("- %s\n", sym)
-		}
-	} else {
-		fmt.Println("의존하는 시스템 콜을 찾지 못했습니다.")
+	// 중복 제거 (예: read@...가 여러 개 있을 수 있음)
+	uniqueWrappers := make(map[string]struct{})
+	for _, sym := range expectSyscalls {
+		parts := strings.Split(sym, "@")
+		uniqueWrappers[parts[0]] = struct{}{}
 	}
 
-	//json으로 변환
-	fmt.Println("JSON 출력:")
-	// json.MarshalIndent를 사용하여 사람이 보기 좋게 포맷팅된 JSON 생성
-	jsonData, err := json.MarshalIndent(expectSyscalls, "", "  ")
+	// [수정] processor.BuildSyscallMap 호출
+	redisMap := processor.BuildSyscallMap(libcAnalyzer, uniqueWrappers)
+
+	// [이동] Redis 저장 로직 (주석 처리됨)
+
+	// --- 6. [신규] Redis에 K-V 데이터 삽입 ---
+	fmt.Println("----------------------------------------")
+	fmt.Println("Redis에 래퍼 $\to$ 커널 매핑 저장 중...")
+	pipe := rdb.Pipeline()
+	for wrapperName, kernelName := range redisMap {
+		if kernelName != "" {
+			pipe.Set(ctx, wrapperName, kernelName, 0)
+		}
+	}
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		log.Printf("[경고] Redis 파이프라인 실행 실패: %v\n", err)
+	} else {
+		log.Println("  [성공] Redis에 데이터 저장 완료.")
+	}
+
+	// --- 7. 최종 JSON 출력 (Redis K-V와 동일한 맵) ---
+	fmt.Println("----------------------------------------")
+	fmt.Println("최종 매핑 결과 JSON (Redis K-V) 출력:")
+	jsonData, err := json.MarshalIndent(redisMap, "", "  ") // redisMap을 출력
 	if err != nil {
 		log.Fatalf("JSON 변환 오류: %v", err)
 	}
-
-	// []byte 타입의 jsonData를 string으로 변환하여 출력
 	fmt.Println(string(jsonData))
-
-	// 스트립 되지 않은 파일이 있다면 해당 함수사용, flag로 옵션으로 끄고 켤수도있음 필요하면 구현
-	/*symbols, err := analyzer.ExtractSymbols()
-		if err != nil {
-		    if _, ok := err.(*elf.FormatError); !ok {
-	    	    log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
-	    	}
-		}
-
-
-		if len(symbols) == 0 {
-			fmt.Println("이 파일은 심볼 정보를 포함하지 않습니다.")
-		} else {
-			fmt.Println("바이너리가 의존하는 동적 심볼 목록:")
-			for _, sym := range symbols {
-				fmt.Printf("- %s\n", sym)
-			}
-		}*/
-
-	/*insns, startAddr, err := analyzer.ExtractAsmCode()
-	if err != nil {
-		log.Printf("다이나믹 심볼 분석 중 예상치 못한 오류 발생: %v", err)
-	}
-	fmt.Printf("시작주소 : 0x%x\n", startAddr)
-	for _, asm := range insns {
-		fmt.Printf("0x%x:\t%s\t%s\n", asm.Address, asm.Mnemonic, asm.OpStr)
-	}*/
-
-	/*()
-	SyscallAddr, err := analyzer.FindSyscallSymbolAddr()
-	if err != nil {
-		log.Printf("syscall 심볼 주소 찾기 중 오류 발생: %v", err)
-	}
-
-	syscalls, err := asmanalysis.FindSyscalls(SyscallAddr, insns)
-	if err != nil {
-		log.Printf("systemcall 추출중 오류 발생: %v", err)
-	}
-
-	fmt.Println("발견된 시스템 콜 목록:")
-	for _, sc := range syscalls {
-		fmt.Printf("- 주소: 0x%x, 시스템 콜 번호: %d\n", sc.Address, sc.Number)
-	}*/
 }
