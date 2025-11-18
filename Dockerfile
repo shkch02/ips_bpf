@@ -27,9 +27,8 @@ FROM alpine:latest
 
 #런타임 의존성 설치 (매우 중요!)
 
-#syscall_filter.go가 'man' 명령어를 사용함
-
-RUN apk add --no-cache man man-pages
+# syscall_filter.go가 'man' 명령어를 사용함
+RUN apk update && apk add --no-cache mandoc man-pages
 
 #빌드 단계에서 생성된 바이너리 복사
 
