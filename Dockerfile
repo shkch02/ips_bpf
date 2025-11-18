@@ -1,12 +1,24 @@
-# [수정] go.mod 기준 1.24.3, Alpine 3.16 기반 사용
-# Alpine 3.16은 Capstone v4.0.2를 제공하여 gapstone v4.0.1과 호환됩니다.
-FROM golang:1.24.3-alpine3.16 AS builder
+# [수정] Go 1.24.3 + Alpine 3.16 (Capstone v4) 환경을 수동으로 구성
+FROM alpine:3.16 AS builder
+
+# BuildKit이 제공하는 아키텍처(amd64, arm64 등)에 맞춰 Go 설치
+ARG TARGETARCH
+ENV GOLANG_VERSION 1.24.3
+ENV GOLANG_ARCH=${TARGETARCH:-amd64}
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOROOT="/usr/local/go"
+
+# Go 1.24.3 수동 설치
+RUN apk add --no-cache curl \
+    && curl -fsSL "https://go.dev/dl/go${GOLANG_VERSION}.linux-${GOLANG_ARCH}.tar.gz" -o go.tar.gz \
+    && tar -C /usr/local -xzf go.tar.gz \
+    && rm go.tar.gz \
+    && go version
+
+# CGO 빌드 의존성 (Capstone v4)
+RUN apk add --no-cache gcc musl-dev capstone-dev pkgconf
 
 WORKDIR /src
-
-# CGO 빌드 의존성 (gcc, musl-dev, capstone-dev, pkgconf)
-# alpine3.16의 capstone-dev는 v4.0.2입니다.
-RUN apk add --no-cache gcc musl-dev capstone-dev pkgconf
 
 # 의존성 모듈 먼저 다운로드
 COPY go.mod go.sum ./
@@ -25,7 +37,7 @@ RUN CGO_ENABLED=1 \
 
 # --- 실행 단계 ---
 
-# [수정] 실행 환경도 Capstone v4가 있는 alpine:3.16으로 고정
+# [유지] 실행 환경은 Capstone v4가 있는 alpine:3.16으로 고정
 FROM alpine:3.16
 
 # 런타임 의존성 설치
