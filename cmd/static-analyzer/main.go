@@ -1,4 +1,5 @@
 // cmd/static-analyzer/main.go
+// 커밋위한 주석
 package main
 
 import (
