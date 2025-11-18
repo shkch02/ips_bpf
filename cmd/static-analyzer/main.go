@@ -2,7 +2,7 @@
 package main
 
 import (
-	//"context"
+	"context"
 	"debug/elf"
 	"encoding/json"
 	"fmt"
@@ -12,7 +12,8 @@ import (
 	"log"
 	"os"
 	"strings"
-	//"github.com/redis/go-redis/v9" // Redis 클라이언트 임포트
+
+	"github.com/redis/go-redis/v9" // Redis 클라이언트 임포트
 )
 
 func main() {
@@ -23,18 +24,17 @@ func main() {
 	}
 
 	// [이동] Redis 초기화 로직 (주석 처리됨)
-	/*
-		// [수정] config.LoadRedisAddr() 호출
-		redisAddr := config.LoadRedisAddr()
-		rdb := redis.NewClient(&redis.Options{
-			Addr: redisAddr,
-		})
-		ctx := context.Background()
-		if err := rdb.Ping(ctx).Err(); err != nil {
-			log.Fatalf("Redis 연결 실패 (%s): %v\n", redisAddr, err)
-		}
-		fmt.Printf("Redis 연결 성공: %s\n", redisAddr)
-	*/
+
+	// [수정] config.LoadRedisAddr() 호출
+	redisAddr := config.LoadRedisAddr()
+	rdb := redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Fatalf("Redis 연결 실패 (%s): %v\n", redisAddr, err)
+	}
+	fmt.Printf("Redis 연결 성공: %s\n", redisAddr)
 
 	// 첫 번째 인자를 파일 경로로 사용
 	filePath := os.Args[1]
@@ -96,23 +96,22 @@ func main() {
 	redisMap := processor.BuildSyscallMap(libcAnalyzer, uniqueWrappers)
 
 	// [이동] Redis 저장 로직 (주석 처리됨)
-	/*
-		// --- 6. [신규] Redis에 K-V 데이터 삽입 ---
-		fmt.Println("----------------------------------------")
-		fmt.Println("Redis에 래퍼 $\to$ 커널 매핑 저장 중...")
-		pipe := rdb.Pipeline()
-		for wrapperName, kernelName := range redisMap {
-			if kernelName != "" {
-				pipe.Set(ctx, wrapperName, kernelName, 0)
-			}
+
+	// --- 6. [신규] Redis에 K-V 데이터 삽입 ---
+	fmt.Println("----------------------------------------")
+	fmt.Println("Redis에 래퍼 $\to$ 커널 매핑 저장 중...")
+	pipe := rdb.Pipeline()
+	for wrapperName, kernelName := range redisMap {
+		if kernelName != "" {
+			pipe.Set(ctx, wrapperName, kernelName, 0)
 		}
-		_, err = pipe.Exec(ctx)
-		if err != nil {
-			log.Printf("[경고] Redis 파이프라인 실행 실패: %v\n", err)
-		} else {
-			log.Println("  [성공] Redis에 데이터 저장 완료.")
-		}
-	*/
+	}
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		log.Printf("[경고] Redis 파이프라인 실행 실패: %v\n", err)
+	} else {
+		log.Println("  [성공] Redis에 데이터 저장 완료.")
+	}
 
 	// --- 7. 최종 JSON 출력 (Redis K-V와 동일한 맵) ---
 	fmt.Println("----------------------------------------")
