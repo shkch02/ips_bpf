@@ -13,7 +13,7 @@ ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libc6-dev \
-    libcapstone5-dev \
+    libcapstone-dev \
     pkg-config \
     manpages-dev \
     man-db \
@@ -46,7 +46,7 @@ FROM debian:stable-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     mandoc \
     man-db \
-    libcapstone5 \
+    libcapstone4 \
     && rm -rf /var/lib/apt/lists/*
 
 # 빌드 단계에서 생성된 바이너리 복사
