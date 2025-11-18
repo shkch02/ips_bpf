@@ -1,5 +1,5 @@
 # [수정] Go 1.24.3 + Debian Slim 기반 사용 (man page 호환성 확보)
-FROM golang:1.24.3-slim AS builder
+FROM golang:1.24.3-bookworm AS builder
 
 # BuildKit이 제공하는 아키텍처(amd64, arm64 등)에 맞춰 Go 설치
 ARG TARGETARCH
