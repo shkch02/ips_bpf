@@ -32,7 +32,7 @@ func main() {
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
-		Password: redisPassword, // 💡 로드된 비밀번호를 옵션에 추가
+		Password: redisPassword,
 	})
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
