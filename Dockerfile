@@ -46,7 +46,7 @@ FROM debian:stable-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     mandoc \
     man-db \
-    libcapstone4 \
+    libcapstone5 \
     && rm -rf /var/lib/apt/lists/*
 
 # 빌드 단계에서 생성된 바이너리 복사
