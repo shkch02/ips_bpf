@@ -40,22 +40,25 @@ pipeline {
         }
 
         // --- 3. Job 이미지 빌드 및 푸시 ---
-        stage('Build & Push Job Image') {
-            steps {
-                // Harbor 인증
-                withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-                    sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p '${HARBOR_PASS}'"
-                    
-                    def FULL_IMAGE = "${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.JOB_IMAGE_NAME}:${env.IMAGE_TAG}"
-                    
-                    echo "Building Job Image: ${FULL_IMAGE}"
-                    
-                    // Dockerfile이 프로젝트 루트(또는 Job 코드 디렉토리)에 있다고 가정
-                    sh "docker build -t ${FULL_IMAGE} ."
-                    sh "docker push ${FULL_IMAGE}"
-                }
+stage('Build & Push Job Image') {
+    steps {
+        // Harbor 인증
+        withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
+            sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p '${HARBOR_PASS}'"
+            
+            // 💡 문제 해결: 'script' 블록으로 변수 정의 및 사용을 감쌈
+            script {
+                def FULL_IMAGE = "${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.JOB_IMAGE_NAME}:${env.IMAGE_TAG}"
+                
+                echo "Building Job Image: ${FULL_IMAGE}"
+                
+                // Dockerfile이 프로젝트 루트에 있다고 가정
+                sh "docker build -t ${FULL_IMAGE} ."
+                sh "docker push ${FULL_IMAGE}"
             }
         }
+    }
+}
 
         // --- 4. Kubernetes에 Job 배포 및 실행 ---
         stage('Deploy & Run Job') {
