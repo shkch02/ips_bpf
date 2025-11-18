@@ -28,8 +28,11 @@ func main() {
 
 	// [수정] config.LoadRedisAddr() 호출
 	redisAddr := config.LoadRedisAddr()
+	redisPassword := config.LoadRedisPassword() // config.go에서 "CCSL_REDIS_PASSWORD"를 읽습니다.
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr: redisAddr,
+		Addr:     redisAddr,
+		Password: redisPassword, // 💡 로드된 비밀번호를 옵션에 추가
 	})
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
