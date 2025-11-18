@@ -1,7 +1,7 @@
 pipeline {
     agent any
 
-    // 💡 기존 파이프라인의 환경 변수를 참고하여 Job에 맞게 재정의
+    // 기존 파이프라인의 환경 변수를 참고하여 Job에 맞게 재정의
     environment {
         // 1. Harbor 및 이미지 정보
         HARBOR_URL        = "shkch.duckdns.org"
