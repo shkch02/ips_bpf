@@ -46,7 +46,7 @@ stage('Build & Push Job Image') {
         withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
             sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p '${HARBOR_PASS}'"
             
-            // 💡 문제 해결: 'script' 블록으로 변수 정의 및 사용을 감쌈
+            // 문제 해결: 'script' 블록으로 변수 정의 및 사용을 감쌈
             script {
                 def FULL_IMAGE = "${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.JOB_IMAGE_NAME}:${env.IMAGE_TAG}"
                 
