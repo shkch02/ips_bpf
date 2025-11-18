@@ -29,8 +29,8 @@ spec:
           - name: CCSL_REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: admin-server-redis-secret
-                key: REDIS_PASSWORD
+                name: redis-ccsl-secret
+                key: redis-password
                 
       # Job이 실패하면 재시도하지 않음 (또는 OnFailure)
       restartPolicy: Never
