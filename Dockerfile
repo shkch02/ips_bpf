@@ -13,7 +13,7 @@ ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libc6-dev \
-    libcapstone-dev \
+    libcapstone5-dev \
     pkg-config \
     manpages-dev \
     man-db \
