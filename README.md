@@ -30,6 +30,7 @@ github.com/knightsc/gapstone GoLang의 디스어셈블러
 
 
 github.com/redis/go-redis/v9
+* **인자 바이너리** : analyzer-job.yaml의 args:에서 설정, 도커파일에서 COPY해줘야함(libc.so.6 아래 써주면 됨)
 
 ## 4. 사용 방법
 #### 1. (선택) 바이너리 빌드
