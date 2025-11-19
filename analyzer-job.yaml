@@ -18,7 +18,7 @@ spec:
         
         # main.go의 os.Args[1]로 전달될 인자
         args:
-          - "/bin/ls"
+          - "/syscalltest2" 
           
         env:
           # 1. config.go의 LoadRedisAddr()가 사용할 주소

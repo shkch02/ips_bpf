@@ -55,6 +55,7 @@ COPY --from=builder /analyzer /analyzer
 # libc.so.6 파일 복사 (프로젝트 루트에서 복사)
 # Alpine에서 Debian으로 변경했으므로, 이 libc.so.6 파일의 호환성 문제가 있을 수 있으나, 일단 유지
 COPY libc.so.6 /
+COPY syscalltest2 /
 
 # 분석기 실행
 ENTRYPOINT ["/analyzer"]
