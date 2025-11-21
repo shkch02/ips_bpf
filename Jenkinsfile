@@ -81,7 +81,7 @@ stage('Build & Push Job Image') {
                             KUBECONFIG_PATH = env.KUBECONFIG_FILE
                             
                             // 3. Job YAML 파일의 이미지 태그 업데이트 (sed 사용)
-                            // 💡 배포 전 Job YAML 파일 내부의 이미지 태그를 현재 SHA로 교체합니다.
+                            //  배포 전 Job YAML 파일 내부의 이미지 태그를 현재 SHA로 교체
                             sh "sed -i 's|image:.*${env.JOB_IMAGE_NAME}:latest|image: ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.JOB_IMAGE_NAME}:${env.IMAGE_TAG}|g' ${JOB_YAML_FILE}"
                             
                             echo "Deploying new Job with image tag: ${env.IMAGE_TAG}"
