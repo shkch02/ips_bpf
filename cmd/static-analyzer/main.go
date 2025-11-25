@@ -10,11 +10,10 @@ import (
 	"ips_bpf/static-analyzer/pkg/analyzer"
 	"ips_bpf/static-analyzer/pkg/config"    // [신규]
 	"ips_bpf/static-analyzer/pkg/processor" // [신규]
+	"ips_bpf/static-analyzer/pkg/storage"
 	"log"
 	"os"
 	"strings"
-
-	"github.com/redis/go-redis/v9" // Redis 클라이언트 임포트
 )
 
 func main() {
@@ -24,21 +23,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// [이동] Redis 초기화 로직 (주석 처리됨)
-
-	// [수정] config.LoadRedisAddr() 호출
+	//레디스 호출
+	ctx := context.Background()
 	redisAddr := config.LoadRedisAddr()
 	redisPassword := config.LoadRedisPassword() // config.go에서 "CCSL_REDIS_PASSWORD"를 읽습니다.
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
-	})
-	ctx := context.Background()
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Redis 연결 실패 (%s): %v\n", redisAddr, err)
+	rdb, err := storage.NewRedisClient(redisAddr, redisPassword)
+	if err != nil {
+		log.Fatalf("Redis 클라이언트 생성 오류: %v", err)
 	}
-	fmt.Printf("Redis 연결 성공: %s\n", redisAddr)
+	defer rdb.Close()
+	fmt.Printf("Redis 클라이언트 생성 완료: %s\n", redisAddr)
 
 	// 첫 번째 인자를 파일 경로로 사용
 	filePath := os.Args[1]
@@ -96,7 +90,7 @@ func main() {
 		uniqueWrappers[parts[0]] = struct{}{}
 	}
 
-	// [수정] processor.BuildSyscallMap 호출
+	// 역어셈 및 분석을 통해 매핑 생성
 	redisMap := processor.BuildSyscallMap(libcAnalyzer, uniqueWrappers)
 
 	// [이동] Redis 저장 로직 (주석 처리됨)

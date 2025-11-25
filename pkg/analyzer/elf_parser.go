@@ -243,7 +243,6 @@ func (a *ELFAnalyzer) FindKernelSyscallPatterns(symbolName string) ([]asmanalysi
 	//    // jmpTargetAddr를 기준으로 다시 Disasm... (복잡도 증가)
 	// }
 
-	// 4. [신규] 어셈블리 트레이서 호출
-	// asmanalysis 패키지의 재작성된 함수를 호출합니다.
+	// 4.어셈블리 트레이서
 	return asmanalysis.FindAllSyscalls(insns)
 }
