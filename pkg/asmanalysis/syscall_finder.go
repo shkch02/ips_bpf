@@ -1,5 +1,8 @@
 package asmanalysis
 
+//역어셈 구조체 설명
+//https://github.com/knightsc/gapstone/blob/master/x86_decomposer.go
+
 import (
 	"fmt"
 
@@ -79,5 +82,5 @@ func FindAllSyscalls(instructions []gapstone.Instruction) ([]SyscallInfo, error)
 			}
 		}
 	}
-	return results, nil
+	return results, nil // result에는 시스콜 호출 주소하고 호출시 rax 인자값들어있음
 }

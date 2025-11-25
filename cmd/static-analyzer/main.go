@@ -23,8 +23,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	/* //context.Background()를 부모로 하여 3초 타임아웃을 설정
+	const timeoutDuration = 3 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)*/
+
 	//레디스 호출
-	ctx := context.Background()
+	ctx := context.Background() //기본 컨텍스트 생성
 	redisAddr := config.LoadRedisAddr()
 	redisPassword := config.LoadRedisPassword() // config.go에서 "CCSL_REDIS_PASSWORD"를 읽습니다.
 	rdb, err := storage.NewRedisClient(redisAddr, redisPassword)
